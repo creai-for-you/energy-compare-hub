@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase'
 function App() {
   const [offerte, setOfferte] = useState([])
   const [consumoLuce, setConsumoLuce] = useState(3727)
-  const [pun, setPun] = useState('CARICAMENTO...')
+  const [pun, setPun] = useState(0)
 
   useEffect(() => {
     async function loadData() {
@@ -14,21 +14,40 @@ function App() {
 
       setOfferte(data || [])
 
-      const result = await supabase
+      const { data: mercato } = await supabase
         .from('mercato')
         .select('*')
 
-      console.log(result)
-
-      if (result.data && result.data.length > 0) {
-        setPun(result.data[0].pun)
-      } else {
-        setPun('NESSUN DATO')
+      if (mercato && mercato.length > 0) {
+        setPun(Number(mercato[0].pun))
       }
     }
 
     loadData()
   }, [])
+
+  const risultati = offerte
+    .filter((o) => o.tipo === 'luce')
+    .map((o) => {
+      let prezzoEnergia = 0
+
+      if (o.tipologia === 'variabile') {
+        prezzoEnergia = pun + Number(o.spread || 0)
+      } else {
+        prezzoEnergia = Number(o.prezzo_fisso || 0)
+      }
+
+      const costo =
+        consumoLuce * prezzoEnergia +
+        Number(o.quota_fissa_annua || 0) -
+        Number(o.sconto_annuo || 0)
+
+      return {
+        ...o,
+        costo
+      }
+    })
+    .sort((a, b) => a.costo - b.costo)
 
   return (
     <div style={{ padding: '40px', fontFamily: 'Arial' }}>
@@ -38,8 +57,8 @@ function App() {
         style={{
           border: '1px solid #ddd',
           padding: '20px',
-          marginBottom: '30px',
-          borderRadius: '8px'
+          borderRadius: '8px',
+          marginBottom: '30px'
         }}
       >
         <h2>Profilo Cliente</h2>
@@ -51,26 +70,38 @@ function App() {
         <input
           type="number"
           value={consumoLuce}
-          onChange={(e) => setConsumoLuce(Number(e.target.value))}
+          onChange={(e) =>
+            setConsumoLuce(Number(e.target.value))
+          }
         />
       </div>
 
       <h2>PUN attuale: {pun}</h2>
 
-      <h2>Offerte trovate: {offerte.length}</h2>
+      <h2>Classifica Offerte</h2>
 
-      {offerte.map((offerta) => (
+      {risultati.map((offerta, index) => (
         <div
           key={offerta.id}
           style={{
             border: '1px solid #ddd',
-            padding: '12px',
-            marginBottom: '10px'
+            padding: '16px',
+            marginBottom: '10px',
+            borderRadius: '8px'
           }}
         >
-          <strong>{offerta.nome}</strong>
-          <br />
-          {offerta.fornitore}
+          <h3>
+            #{index + 1} - {offerta.nome}
+          </h3>
+
+          <p>Fornitore: {offerta.fornitore}</p>
+
+          <p>
+            Costo stimato:{' '}
+            <strong>
+              € {offerta.costo.toFixed(2)}
+            </strong>
+          </p>
         </div>
       ))}
     </div>
