@@ -6,9 +6,18 @@ function App() {
 
   const [consumoLuce, setConsumoLuce] = useState(3727)
   const [consumoGas, setConsumoGas] = useState(800)
+  const [potenza] = useState(4.5)
 
   const [pun, setPun] = useState(0)
   const [psv, setPsv] = useState(0)
+
+  const [costiRegolati, setCostiRegolati] = useState({
+    quota_rete_kwh: 0,
+    quota_potenza_kw: 0,
+    quota_fissa_annua: 0,
+    oneri_kwh: 0,
+    iva: 0
+  })
 
   useEffect(() => {
     async function loadData() {
@@ -22,71 +31,105 @@ function App() {
         .from('mercato')
         .select('*')
 
-      if (mercatoData && mercatoData.length > 0) {
+      if (mercatoData?.length > 0) {
         setPun(Number(mercatoData[0].pun))
         setPsv(Number(mercatoData[0].psv))
+      }
+
+      const { data: costiData } = await supabase
+        .from('costi_regolati')
+        .select('*')
+
+      if (costiData?.length > 0) {
+        setCostiRegolati(costiData[0])
       }
     }
 
     loadData()
   }, [])
 
+  const calcolaCostoLuce = (offerta) => {
+    let prezzoEnergia = 0
+
+    if (offerta.tipologia === 'variabile') {
+      prezzoEnergia = pun + Number(offerta.spread || 0)
+    } else {
+      prezzoEnergia = Number(offerta.prezzo_fisso || 0)
+    }
+
+    const energia =
+      consumoLuce * prezzoEnergia
+
+    const rete =
+      consumoLuce *
+      Number(costiRegolati.quota_rete_kwh)
+
+    const potenzaCosto =
+      potenza *
+      Number(costiRegolati.quota_potenza_kw)
+
+    const oneri =
+      consumoLuce *
+      Number(costiRegolati.oneri_kwh)
+
+    const quotaFissa =
+      Number(offerta.quota_fissa_annua || 0) +
+      Number(costiRegolati.quota_fissa_annua)
+
+    const imponibile =
+      energia +
+      rete +
+      potenzaCosto +
+      oneri +
+      quotaFissa
+
+    const iva =
+      imponibile *
+      Number(costiRegolati.iva)
+
+    const totale =
+      imponibile +
+      iva -
+      Number(offerta.sconto_annuo || 0)
+
+    return {
+      ...offerta,
+      energia,
+      rete,
+      potenzaCosto,
+      oneri,
+      iva,
+      totale
+    }
+  }
+
   const risultatiLuce = offerte
     .filter((o) => o.tipo === 'luce')
-    .map((o) => {
-      let prezzo = 0
-
-      if (o.tipologia === 'variabile') {
-        prezzo = pun + Number(o.spread || 0)
-      } else {
-        prezzo = Number(o.prezzo_fisso || 0)
-      }
-
-      const costo =
-        consumoLuce * prezzo +
-        Number(o.quota_fissa_annua || 0) -
-        Number(o.sconto_annuo || 0)
-
-      return {
-        ...o,
-        prezzo,
-        costo
-      }
-    })
-    .sort((a, b) => a.costo - b.costo)
+    .map(calcolaCostoLuce)
+    .sort((a, b) => a.totale - b.totale)
 
   const risultatiGas = offerte
     .filter((o) => o.tipo === 'gas')
     .map((o) => {
-      let prezzo = 0
+      const prezzo =
+        o.tipologia === 'variabile'
+          ? psv + Number(o.spread || 0)
+          : Number(o.prezzo_fisso || 0)
 
-      if (o.tipologia === 'variabile') {
-        prezzo = psv + Number(o.spread || 0)
-      } else {
-        prezzo = Number(o.prezzo_fisso || 0)
-      }
-
-      const costo =
+      const totale =
         consumoGas * prezzo +
-        Number(o.quota_fissa_annua || 0) -
-        Number(o.sconto_annuo || 0)
+        Number(o.quota_fissa_annua || 0)
 
       return {
         ...o,
-        prezzo,
-        costo
+        totale
       }
     })
-    .sort((a, b) => a.costo - b.costo)
+    .sort((a, b) => a.totale - b.totale)
 
   const peggiorLuce =
     risultatiLuce.length > 0
-      ? risultatiLuce[risultatiLuce.length - 1].costo
-      : 0
-
-  const peggiorGas =
-    risultatiGas.length > 0
-      ? risultatiGas[risultatiGas.length - 1].costo
+      ? risultatiLuce[risultatiLuce.length - 1].totale
       : 0
 
   return (
@@ -95,170 +138,127 @@ function App() {
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '40px',
-        fontFamily: 'Arial, sans-serif'
+        fontFamily: 'Arial'
       }}
     >
-      <h1 style={{ textAlign: 'center' }}>
-        Comparatore Energia
-      </h1>
+      <h1>Comparatore Energia</h1>
 
       <div
         style={{
           border: '1px solid #ddd',
-          borderRadius: '12px',
           padding: '20px',
-          marginBottom: '30px'
+          borderRadius: '12px'
         }}
       >
         <h2>Profilo Cliente</h2>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Consumo Luce (kWh/anno)</label>
-          <br />
-
+        <p>
+          Consumo luce:
           <input
             type="number"
             value={consumoLuce}
             onChange={(e) =>
-              setConsumoLuce(Number(e.target.value))
+              setConsumoLuce(
+                Number(e.target.value)
+              )
             }
           />
-        </div>
+        </p>
 
-        <div>
-          <label>Consumo Gas (Smc/anno)</label>
-          <br />
-
+        <p>
+          Consumo gas:
           <input
             type="number"
             value={consumoGas}
             onChange={(e) =>
-              setConsumoGas(Number(e.target.value))
+              setConsumoGas(
+                Number(e.target.value)
+              )
             }
           />
-        </div>
+        </p>
       </div>
 
-      <div
-        style={{
-          marginBottom: '30px'
-        }}
-      >
-        <h2>PUN attuale: {pun}</h2>
-        <h2>PSV attuale: {psv}</h2>
-      </div>
+      <h2>PUN: {pun}</h2>
+      <h2>PSV: {psv}</h2>
 
       <h2>⚡ Classifica Luce</h2>
 
-      {risultatiLuce.map((offerta, index) => {
-        const risparmio =
-          peggiorLuce - offerta.costo
+      {risultatiLuce.map((o, idx) => (
+        <div
+          key={o.id}
+          style={{
+            marginBottom: '20px',
+            padding: '20px',
+            border:
+              idx === 0
+                ? '3px solid green'
+                : '1px solid #ddd',
+            borderRadius: '12px',
+            background:
+              idx === 0
+                ? '#f0fff0'
+                : 'white'
+          }}
+        >
+          <h3>
+            #{idx + 1} - {o.nome}
+          </h3>
 
-        return (
-          <div
-            key={offerta.id}
-            style={{
-              border:
-                index === 0
-                  ? '3px solid green'
-                  : '1px solid #ddd',
-              padding: '16px',
-              borderRadius: '10px',
-              marginBottom: '10px',
-              background:
-                index === 0
-                  ? '#f0fff0'
-                  : 'white'
-            }}
-          >
-            <h3>
-              #{index + 1} - {offerta.nome}
-            </h3>
-
-            {index === 0 && (
-              <p>
-                🥇 <strong>MIGLIORE OFFERTA</strong>
-              </p>
-            )}
-
-            <p>Fornitore: {offerta.fornitore}</p>
-
+          {idx === 0 && (
             <p>
-              Prezzo Energia: €
-              {offerta.prezzo.toFixed(4)}
+              🥇
+              <strong>
+                {' '}
+                MIGLIORE OFFERTA
+              </strong>
             </p>
+          )}
 
-            <p>
-              Costo Stimato: €
-              {offerta.costo.toFixed(2)}
-            </p>
+          <p>Energia: € {o.energia.toFixed(2)}</p>
+          <p>Rete: € {o.rete.toFixed(2)}</p>
+          <p>
+            Potenza: € {o.potenzaCosto.toFixed(2)}
+          </p>
+          <p>Oneri: € {o.oneri.toFixed(2)}</p>
+          <p>IVA: € {o.iva.toFixed(2)}</p>
 
-            <p>
-              Risparmio: €
-              {risparmio.toFixed(2)}
-            </p>
-          </div>
-        )
-      })}
+          <p>
+            <strong>
+              Totale:
+              € {o.totale.toFixed(2)}
+            </strong>
+          </p>
 
-      <h2
-        style={{
-          marginTop: '50px'
-        }}
-      >
-        🔥 Classifica Gas
-      </h2>
+          <p>
+            Risparmio:
+            € {(peggiorLuce - o.totale).toFixed(2)}
+          </p>
+        </div>
+      ))}
 
-      {risultatiGas.map((offerta, index) => {
-        const risparmio =
-          peggiorGas - offerta.costo
+      <h2>🔥 Classifica Gas</h2>
 
-        return (
-          <div
-            key={offerta.id}
-            style={{
-              border:
-                index === 0
-                  ? '3px solid green'
-                  : '1px solid #ddd',
-              padding: '16px',
-              borderRadius: '10px',
-              marginBottom: '10px',
-              background:
-                index === 0
-                  ? '#f0fff0'
-                  : 'white'
-            }}
-          >
-            <h3>
-              #{index + 1} - {offerta.nome}
-            </h3>
+      {risultatiGas.map((o, idx) => (
+        <div
+          key={o.id}
+          style={{
+            marginBottom: '20px',
+            padding: '20px',
+            borderRadius: '12px',
+            border: '1px solid #ddd'
+          }}
+        >
+          <h3>
+            #{idx + 1} - {o.nome}
+          </h3>
 
-            {index === 0 && (
-              <p>
-                🥇 <strong>MIGLIORE OFFERTA GAS</strong>
-              </p>
-            )}
-
-            <p>Fornitore: {offerta.fornitore}</p>
-
-            <p>
-              Prezzo Gas: €
-              {offerta.prezzo.toFixed(4)}
-            </p>
-
-            <p>
-              Costo Stimato: €
-              {offerta.costo.toFixed(2)}
-            </p>
-
-            <p>
-              Risparmio: €
-              {risparmio.toFixed(2)}
-            </p>
-          </div>
-        )
-      })}
+          <p>
+            Totale:
+            € {o.totale.toFixed(2)}
+          </p>
+        </div>
+      ))}
     </div>
   )
 }
