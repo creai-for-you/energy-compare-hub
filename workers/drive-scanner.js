@@ -14,9 +14,9 @@ async function runScanner(env) {
   const headers = {
     apikey: env.SUPABASE_SERVICE_KEY,
     Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-    'Accept-Profile': 'public'
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "Accept-Profile": "public"
   }
 
   try {
@@ -64,13 +64,26 @@ async function runScanner(env) {
     const mappatura =
       await mappaturaRes.json()
 
+    const now = new Date().toISOString()
+
     return {
       success: true,
 
-      timestamp: new Date().toISOString(),
+      timestamp: now,
 
-      configurazione_drive:
-        configurazione,
+      drive: {
+        url:
+          configurazione?.[0]
+            ?.cartella_principale || null,
+
+        attiva:
+          configurazione?.[0]
+            ?.attiva || false,
+
+        frequenza:
+          configurazione?.[0]
+            ?.frequenza_scansione || null
+      },
 
       statistiche: {
         repository_drive:
@@ -86,7 +99,23 @@ async function runScanner(env) {
           mappatura.length
       },
 
-      stato: 'Scanner operativo'
+      categorie: categorie.map(
+        c => c.categoria
+      ),
+
+      mappature: mappatura.map(
+        m => ({
+          cartella: m.cartella_drive,
+          categoria:
+            m.categoria_offerta
+        })
+      ),
+
+      prossima_fase:
+        "scanGoogleDrive",
+
+      stato:
+        "Scanner V4 operativo"
     }
   } catch (error) {
     return {
