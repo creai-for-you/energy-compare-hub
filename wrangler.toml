@@ -1,0 +1,6 @@
+name = "drive-scanner"
+main = "workers/drive-scanner.js"
+compatibility_date = "2026-07-14"
+
+[triggers]
+crons = ["0 2 * * *"]
