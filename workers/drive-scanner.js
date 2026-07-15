@@ -14,13 +14,15 @@ async function runScanner(env) {
   const headers = {
     apikey: env.SUPABASE_SERVICE_KEY,
     Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    Accept: 'application/json'
   }
 
   try {
     const response = await fetch(
       `${env.SUPABASE_URL}/rest/v1/configurazione_drive?select=*`,
       {
+        method: 'GET',
         headers
       }
     )
@@ -30,7 +32,8 @@ async function runScanner(env) {
     return {
       success: true,
       responseOk: response.ok,
-      rows: data.length,
+      status: response.status,
+      rows: Array.isArray(data) ? data.length : 0,
       rawData: data
     }
   } catch (error) {
@@ -40,3 +43,4 @@ async function runScanner(env) {
     }
   }
 }
+`
