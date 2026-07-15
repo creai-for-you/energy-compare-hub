@@ -5,117 +5,33 @@ export default {
 
   async fetch(request, env) {
     const result = await runScanner(env)
-
     return Response.json(result)
   }
 }
 
 async function runScanner(env) {
-  const headers = {
-    apikey: env.SUPABASE_SERVICE_KEY,
-    Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    "Accept-Profile": "public"
-  }
-
   try {
-    const [
-      configurazioneRes,
-      repositoryRes,
-      monitoratiRes,
-      categorieRes,
-      mappaturaRes
-    ] = await Promise.all([
-      fetch(
-        `${env.SUPABASE_URL}/rest/v1/configurazione_drive?select=*`,
-        { headers }
-      ),
-      fetch(
-        `${env.SUPABASE_URL}/rest/v1/repository_drive?select=*`,
-        { headers }
-      ),
-      fetch(
-        `${env.SUPABASE_URL}/rest/v1/file_monitorati?select=*`,
-        { headers }
-      ),
-      fetch(
-        `${env.SUPABASE_URL}/rest/v1/categorie_offerte?select=*`,
-        { headers }
-      ),
-      fetch(
-        `${env.SUPABASE_URL}/rest/v1/mappatura_cartelle_drive?select=*`,
-        { headers }
-      )
-    ])
+    const token = await getAccessToken(env)
 
-    const configurazione =
-      await configurazioneRes.json()
+    const rootFolderId =
+      "1TV9_3II1TWws17FD-tV9UurVMUIE-7o4"
 
-    const repository =
-      await repositoryRes.json()
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${rootFolderId}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime,webViewLink)`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
 
-    const monitorati =
-      await monitoratiRes.json()
-
-    const categorie =
-      await categorieRes.json()
-
-    const mappatura =
-      await mappaturaRes.json()
-
-    const now = new Date().toISOString()
+    const data = await response.json()
 
     return {
       success: true,
-
-      timestamp: now,
-
-      drive: {
-        url:
-          configurazione?.[0]
-            ?.cartella_principale || null,
-
-        attiva:
-          configurazione?.[0]
-            ?.attiva || false,
-
-        frequenza:
-          configurazione?.[0]
-            ?.frequenza_scansione || null
-      },
-
-      statistiche: {
-        repository_drive:
-          repository.length,
-
-        file_monitorati:
-          monitorati.length,
-
-        categorie_offerte:
-          categorie.length,
-
-        mappatura_cartelle_drive:
-          mappatura.length
-      },
-
-      categorie: categorie.map(
-        c => c.categoria
-      ),
-
-      mappature: mappatura.map(
-        m => ({
-          cartella: m.cartella_drive,
-          categoria:
-            m.categoria_offerta
-        })
-      ),
-
-      prossima_fase:
-        "scanGoogleDrive",
-
-      stato:
-        "Scanner V4 operativo"
+      folderId: rootFolderId,
+      filesFound: data.files?.length || 0,
+      files: data.files || []
     }
   } catch (error) {
     return {
@@ -123,4 +39,100 @@ async function runScanner(env) {
       error: error.message
     }
   }
+}
+
+async function getAccessToken(env) {
+  const now = Math.floor(Date.now() / 1000)
+
+  const header = {
+    alg: "RS256",
+    typ: "JWT"
+  }
+
+  const payload = {
+    iss: env.GOOGLE_CLIENT_EMAIL,
+    scope: "https://www.googleapis.com/auth/drive.readonly",
+    aud: "https://oauth2.googleapis.com/token",
+    exp: now + 3600,
+    iat: now
+  }
+
+  const jwt =
+    `${base64url(JSON.stringify(header))}.` +
+    `${base64url(JSON.stringify(payload))}`
+
+  const privateKey = env.GOOGLE_PRIVATE_KEY
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace("-----END PRIVATE KEY-----", "")
+    .replace(/\n/g, "")
+
+  const keyData = Uint8Array.from(
+    atob(privateKey),
+    c => c.charCodeAt(0)
+  )
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8",
+    keyData.buffer,
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: "SHA-256"
+    },
+    false,
+    ["sign"]
+  )
+
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
+    new TextEncoder().encode(jwt)
+  )
+
+  const signedJwt =
+    `${jwt}.${base64url(signature)}`
+
+  const tokenResponse = await fetch(
+    "https://oauth2.googleapis.com/token",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({
+        grant_type:
+          "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: signedJwt
+      })
+    }
+  )
+
+  const tokenData =
+    await tokenResponse.json()
+
+  if (!tokenData.access_token) {
+    throw new Error(
+      JSON.stringify(tokenData)
+    )
+  }
+
+  return tokenData.access_token
+}
+
+function base64url(input) {
+  const bytes =
+    typeof input === "string"
+      ? new TextEncoder().encode(input)
+      : new Uint8Array(input)
+
+  let binary = ""
+
+  bytes.forEach(byte => {
+    binary += String.fromCharCode(byte)
+  })
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "")
 }
