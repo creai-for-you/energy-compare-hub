@@ -43,12 +43,20 @@ async function runScanner(env) {
         .upsert(
           {
             google_file_id: pdf.id,
-            nome_file: pdf.name,
-            ultima_modifica: pdf.modifiedTime,
-            url_file: pdf.webViewLink,
 
-            categoria_drive: pdf.rootCategory,
-            percorso_drive: pdf.path,
+            nome_file: pdf.name,
+
+            ultima_modifica:
+              pdf.modifiedTime,
+
+            url_file:
+              pdf.webViewLink,
+
+            categoria_drive:
+              pdf.rootCategory,
+
+            percorso_drive:
+              pdf.path,
 
             ultima_scansione:
               new Date().toISOString(),
@@ -104,6 +112,7 @@ async function runScanner(env) {
       inseriti,
       distribuzione
     };
+
   } catch (error) {
     return {
       success: false,
@@ -134,6 +143,7 @@ async function scanRecursive(
     );
 
   for (const item of children) {
+
     if (
       item.mimeType ===
       "application/vnd.google-apps.folder"
@@ -191,6 +201,7 @@ async function listFolder(
 }
 
 function parseFileName(nomeFile) {
+
   const clean =
     nomeFile.replace(
       /\.pdf$/i,
@@ -236,20 +247,26 @@ function parseFileName(nomeFile) {
     commodity = "EE";
   }
 
+  const reserved = new Set([
+    String(codice_listino),
+    fornitore,
+    categoria_cliente,
+    formula,
+    commodity,
+    versione,
+    periodo,
+    "TRIO",
+    "MONO"
+  ]);
+
   const prodottoParts =
-    parts
-      .slice(4)
-      .filter(
-        p =>
-          p !== commodity &&
-          p !== versione &&
-          p !== periodo &&
-          p !== "TRIO" &&
-          p !== "MONO"
-      );
+    parts.filter(
+      p => !reserved.has(p)
+    );
 
   const prodotto =
     prodottoParts
+      .slice(4)
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
@@ -268,6 +285,7 @@ function parseFileName(nomeFile) {
 }
 
 async function getAccessToken(env) {
+
   const key =
     await importPKCS8(
       env.GOOGLE_PRIVATE_KEY,
