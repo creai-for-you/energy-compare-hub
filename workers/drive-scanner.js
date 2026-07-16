@@ -1,25 +1,64 @@
+import { SignJWT, importPKCS8 } from "jose";
+
 export default {
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(runScanner(env))
-  },
-
   async fetch(request, env) {
-    const result = await runScanner(env)
-    return Response.json(result)
+    try {
+      const token = await getAccessToken(env);
+
+      return Response.json({
+        success: true,
+        tokenReceived: true,
+        tokenLength: token.length
+      });
+    } catch (error) {
+      return Response.json({
+        success: false,
+        error: error.message
+      });
+    }
   }
-}
+};
 
-async function runScanner(env) {
-  return {
-    success: true,
-    messaggio:
-      "Google Drive API configurata correttamente",
+async function getAccessToken(env) {
+  const key = await importPKCS8(
+    env.GOOGLE_PRIVATE_KEY,
+    "RS256"
+  );
 
-    email: env.GOOGLE_CLIENT_EMAIL,
+  const jwt = await new SignJWT({
+    scope: "https://www.googleapis.com/auth/drive.readonly"
+  })
+    .setProtectedHeader({
+      alg: "RS256",
+      typ: "JWT"
+    })
+    .setIssuer(env.GOOGLE_CLIENT_EMAIL)
+    .setAudience("https://oauth2.googleapis.com/token")
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(key);
 
-    keyPresent: !!env.GOOGLE_PRIVATE_KEY,
+  const response = await fetch(
+    "https://oauth2.googleapis.com/token",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({
+        grant_type:
+          "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt
+      })
+    }
+  );
 
-    prossima_fase:
-      "abilitazione scansione reale Drive"
+  const data = await response.json();
+
+  if (!data.access_token) {
+    throw new Error(JSON.stringify(data));
   }
+
+  return data.access_token;
 }
