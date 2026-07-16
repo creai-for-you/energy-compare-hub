@@ -43,12 +43,20 @@ async function runScanner(env) {
         .upsert(
           {
             google_file_id: pdf.id,
-            nome_file: pdf.name,
-            ultima_modifica: pdf.modifiedTime,
-            url_file: pdf.webViewLink,
 
-            categoria_drive: pdf.rootCategory,
-            percorso_drive: pdf.path,
+            nome_file: pdf.name,
+
+            ultima_modifica:
+              pdf.modifiedTime,
+
+            url_file:
+              pdf.webViewLink,
+
+            categoria_drive:
+              pdf.rootCategory,
+
+            percorso_drive:
+              pdf.path,
 
             ultima_scansione:
               new Date().toISOString(),
@@ -75,10 +83,14 @@ async function runScanner(env) {
               metadata.versione,
 
             periodo:
-              metadata.periodo
+              metadata.periodo,
+
+            stato_offerta:
+              "ATTIVA"
           },
           {
-            onConflict: "google_file_id"
+            onConflict:
+              "google_file_id"
           }
         );
 
@@ -124,10 +136,11 @@ async function scanRecursive(
 
   visited.add(folderId);
 
-  const children = await listFolder(
-    token,
-    folderId
-  );
+  const children =
+    await listFolder(
+      token,
+      folderId
+    );
 
   for (const item of children) {
 
@@ -170,28 +183,35 @@ async function listFolder(
   token,
   folderId
 ) {
-  const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime,webViewLink)`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
+  const response =
+    await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime,webViewLink)`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
       }
-    }
-  );
+    );
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
   return data.files || [];
 }
 
 function parseFileName(nomeFile) {
+
   const clean =
-    nomeFile.replace(/\.pdf$/i, "");
+    nomeFile.replace(
+      /\.pdf$/i,
+      ""
+    );
 
   const parts =
     clean.split("_");
 
-  if (parts.length < 5) {
+  if (parts.length < 6) {
     return {};
   }
 
@@ -207,17 +227,6 @@ function parseFileName(nomeFile) {
   const formula =
     parts[3] || null;
 
-  let commodity = null;
-
-  for (const part of parts) {
-    if (
-      part === "GAS" ||
-      part === "EE"
-    ) {
-      commodity = part;
-    }
-  }
-
   const versione =
     parts.find(
       p => /^\d{3}$/.test(p)
@@ -228,19 +237,36 @@ function parseFileName(nomeFile) {
       p => /^Q\d\d{4}$/.test(p)
     ) || null;
 
-  let prodottoParts =
-    parts.slice(4);
+  let commodity = null;
 
-  prodottoParts =
-    prodottoParts.filter(
-      p =>
-        p !== commodity &&
-        p !== versione &&
-        p !== periodo
+  if (parts.includes("GAS")) {
+    commodity = "GAS";
+  }
+
+  if (parts.includes("EE")) {
+    commodity = "EE";
+  }
+
+  const reserved = new Set([
+    String(codice_listino),
+    fornitore,
+    categoria_cliente,
+    formula,
+    commodity,
+    versione,
+    periodo,
+    "TRIO",
+    "MONO"
+  ]);
+
+  const prodottoParts =
+    parts.filter(
+      p => !reserved.has(p)
     );
 
   const prodotto =
     prodottoParts
+      .slice(4)
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
@@ -251,13 +277,15 @@ function parseFileName(nomeFile) {
     categoria_cliente,
     formula,
     commodity,
-    prodotto: prodotto || null,
+    prodotto:
+      prodotto || null,
     versione,
     periodo
   };
 }
 
 async function getAccessToken(env) {
+
   const key =
     await importPKCS8(
       env.GOOGLE_PRIVATE_KEY,
