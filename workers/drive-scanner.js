@@ -409,49 +409,63 @@ function parseFileName(
       periodo.toUpperCase();
   }
 
-  // costruzione prodotto
-  const esclusi =
-    new Set([
-      String(
-        result.codice_listino
-      ),
+  // COSTRUZIONE NOME OFFERTA
 
-      result.fornitore,
+const esclusi =
+  new Set([
+    String(
+      result.codice_listino
+    ),
 
-      result.categoria_cliente,
+    result.fornitore,
 
-      result.formula,
+    result.commodity,
 
-      result.commodity,
+    result.versione,
 
-      result.versione,
+    result.periodo,
 
-      result.periodo,
+    "TRIO",
 
-      "TRIO",
+    "MONO"
+  ]);
 
-      "MONO"
-    ]);
+const prodottoParts =
+  parts.filter(
+    p =>
+      p &&
+      !esclusi.has(p)
+  );
 
-  const prodottoParts =
-    parts.filter(
-      p =>
-        p &&
-        !esclusi.has(
-          p
-        )
-    );
+let nomeProdotto =
+  prodottoParts
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  result.prodotto =
-    prodottoParts
-      .join(" ")
-      .replace(
-        /\s+/g,
-        " "
-      )
-      .trim() || null;
+// Rimuove eventuali prefissi duplicati
+nomeProdotto =
+  nomeProdotto
+    .replace(/^DOM\s+/i, "")
+    .replace(/^BUS\s+/i, "")
+    .replace(/^CON\s+/i, "")
+    .replace(/^FIX\s+/i, "")
+    .replace(/^PSV\s+/i, "")
+    .replace(/^PUN\s+/i, "")
+    .trim();
 
-  return result;
+result.prodotto =
+  [
+    result.categoria_cliente,
+    result.formula,
+    nomeProdotto
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+return result;
 }
 
 async function getAccessToken(
