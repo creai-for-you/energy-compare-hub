@@ -1,7 +1,8 @@
 import { SignJWT, importPKCS8 } from "jose";
 import { createClient } from "@supabase/supabase-js";
 
-const ROOT_FOLDER_ID = "1TV9_3II1TWws17FD-tV9UurVMUIE-7o4";
+const ROOT_FOLDER_ID =
+  "1TV9_3II1TWws17FD-tV9UurVMUIE-7o4";
 
 export default {
   async scheduled(event, env, ctx) {
@@ -9,18 +10,22 @@ export default {
   },
 
   async fetch(request, env) {
-    return Response.json(await runScanner(env));
+    return Response.json(
+      await runScanner(env)
+    );
   }
 };
 
 async function runScanner(env) {
   try {
-    const token = await getAccessToken(env);
+    const token =
+      await getAccessToken(env);
 
-    const supabase = createClient(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_KEY
-    );
+    const supabase =
+      createClient(
+        env.SUPABASE_URL,
+        env.SUPABASE_SERVICE_KEY
+      );
 
     const allPdfs = [];
 
@@ -34,74 +39,116 @@ async function runScanner(env) {
     );
 
     let inseriti = 0;
+    let errori = 0;
 
     for (const pdf of allPdfs) {
-      const metadata = parseFileName(pdf.name);
+      const metadata =
+        parseFileName(pdf.name);
 
-      const { error } = await supabase
-        .from("repository_drive")
-        .upsert(
-          {
-            google_file_id: pdf.id,
-            nome_file: pdf.name,
-            ultima_modifica: pdf.modifiedTime,
-            url_file: pdf.webViewLink,
+      // Log per file non riconosciuti
+      if (
+        !metadata.codice_listino
+      ) {
+        console.log(
+          "FILE NON RICONOSCIUTO:",
+          pdf.name
+        );
+      }
 
-            categoria_drive: pdf.rootCategory,
-            percorso_drive: pdf.path,
+      const { error } =
+        await supabase
+          .from("repository_drive")
+          .upsert(
+            {
+              google_file_id: pdf.id,
 
-            ultima_scansione:
-              new Date().toISOString(),
+              nome_file: pdf.name,
 
-            codice_listino:
-              metadata.codice_listino,
+              ultima_modifica:
+                pdf.modifiedTime,
 
-            fornitore:
-              metadata.fornitore,
+              url_file:
+                pdf.webViewLink,
 
-            categoria_cliente:
-              metadata.categoria_cliente,
+              categoria_drive:
+                pdf.rootCategory,
 
-            formula:
-              metadata.formula,
+              percorso_drive:
+                pdf.path,
 
-            commodity:
-              metadata.commodity,
+              ultima_scansione:
+                new Date().toISOString(),
 
-            prodotto:
-              metadata.prodotto,
+              codice_listino:
+                metadata.codice_listino,
 
-            versione:
-              metadata.versione,
+              fornitore:
+                metadata.fornitore,
 
-            periodo:
-              metadata.periodo,
+              categoria_cliente:
+                metadata.categoria_cliente,
 
-            stato_offerta:
-              "ATTIVA"
-          },
-          {
-            onConflict:
-              "google_file_id"
-          }
+              formula:
+                metadata.formula,
+
+              commodity:
+                metadata.commodity,
+
+              prodotto:
+                metadata.prodotto,
+
+              versione:
+                metadata.versione,
+
+              periodo:
+                metadata.periodo,
+
+              stato_offerta:
+                "ATTIVA",
+
+              ultimo_import:
+                new Date().toISOString()
+            },
+            {
+              onConflict:
+                "google_file_id"
+            }
+          );
+
+      if (error) {
+        errori++;
+
+        console.error(
+          "ERRORE UPSERT:",
+          pdf.name,
+          error
         );
 
-      if (!error) {
-        inseriti++;
+        continue;
       }
+
+      inseriti++;
     }
 
     const distribuzione = {};
 
     for (const pdf of allPdfs) {
-      distribuzione[pdf.rootCategory] =
-        (distribuzione[pdf.rootCategory] || 0) + 1;
+      distribuzione[
+        pdf.rootCategory
+      ] =
+        (
+          distribuzione[
+            pdf.rootCategory
+          ] || 0
+        ) + 1;
     }
 
     return {
       success: true,
-      pdf_trovati: allPdfs.length,
+      pdf_trovati:
+        allPdfs.length,
       inseriti,
+      errori,
       distribuzione
     };
   } catch (error) {
@@ -121,7 +168,9 @@ async function scanRecursive(
   results,
   visited
 ) {
-  if (visited.has(folderId)) {
+  if (
+    visited.has(folderId)
+  ) {
     return;
   }
 
@@ -139,7 +188,8 @@ async function scanRecursive(
       "application/vnd.google-apps.folder"
     ) {
       const nextRoot =
-        rootCategory || item.name;
+        rootCategory ||
+        item.name;
 
       const nextPath =
         currentPath
@@ -190,84 +240,223 @@ async function listFolder(
   return data.files || [];
 }
 
-function parseFileName(nomeFile) {
+/**
+ * Parser robusto.
+ * Non dipende da nomi offerta fissi.
+ * Continua a funzionare anche se Segnoverde
+ * inventa nuovi prodotti.
+ */
+function parseFileName(
+  nomeFile
+) {
   const clean =
-    nomeFile.replace(
-      /\.pdf$/i,
-      ""
-    );
-
-  const parts =
-    clean.split("_");
-
-  if (parts.length < 6) {
-    return {};
-  }
-
-  const codice_listino =
-    Number(parts[0]) || null;
-
-  const fornitore =
-    parts[1] || null;
-
-  const categoria_cliente =
-    parts[2] || null;
-
-  const formula =
-    parts[3] || null;
-
-  const versione =
-    parts.find(
-      p => /^\d{3}$/.test(p)
-    ) || null;
-
-  const periodo =
-    parts.find(
-      p => /^Q\d\d{4}$/.test(p)
-    ) || null;
-
-  let commodity = null;
-
-  if (parts.includes("GAS")) {
-    commodity = "GAS";
-  }
-
-  if (parts.includes("EE")) {
-    commodity = "EE";
-  }
-
-  const prodottoParts =
-    parts
-      .slice(4)
-      .filter(
-        p =>
-          p !== commodity &&
-          p !== versione &&
-          p !== periodo &&
-          p !== "TRIO" &&
-          p !== "MONO"
-      );
-
-  const prodotto =
-    prodottoParts
-      .join(" ")
-      .replace(/\s+/g, " ")
+    nomeFile
+      .replace(
+        /\.pdf$/i,
+        ""
+      )
       .trim();
 
-  return {
-    codice_listino,
-    fornitore,
-    categoria_cliente,
-    formula,
-    commodity,
+  const parts =
+    clean
+      .split("_")
+      .map(p =>
+        p.trim()
+      )
+      .filter(Boolean);
+
+  const result = {
+    codice_listino:
+      null,
+
+    fornitore:
+      null,
+
+    categoria_cliente:
+      null,
+
+    formula:
+      null,
+
+    commodity:
+      null,
+
     prodotto:
-      prodotto || null,
-    versione,
-    periodo
+      null,
+
+    versione:
+      null,
+
+    periodo:
+      null
   };
+
+  // codice listino
+  const codice =
+    parts.find(
+      p =>
+        /^\d{5}$/.test(
+          p
+        )
+    );
+
+  if (codice) {
+    result.codice_listino =
+      Number(codice);
+  }
+
+  // fornitore
+  if (parts.length > 1) {
+    result.fornitore =
+      parts[1];
+  }
+
+  // cliente
+  if (
+    parts.includes(
+      "DOM"
+    ) ||
+    parts.includes(
+      "DOMESTICO"
+    )
+  ) {
+    result.categoria_cliente =
+      "DOM";
+  }
+
+  if (
+    parts.includes(
+      "BUS"
+    ) ||
+    parts.includes(
+      "BUSINESS"
+    )
+  ) {
+    result.categoria_cliente =
+      "BUS";
+  }
+
+  // formula
+  const formuleNote =
+    [
+      "FIX",
+      "PSV",
+      "PUN",
+      "PLACET",
+      "INDEX"
+    ];
+
+  const formula =
+    parts.find(
+      p =>
+        formuleNote.includes(
+          p.toUpperCase()
+        )
+    );
+
+  if (formula) {
+    result.formula =
+      formula.toUpperCase();
+  }
+
+  // commodity
+  if (
+    parts.includes(
+      "GAS"
+    )
+  ) {
+    result.commodity =
+      "GAS";
+  }
+
+  if (
+    parts.includes(
+      "EE"
+    ) ||
+    parts.includes(
+      "LUCE"
+    )
+  ) {
+    result.commodity =
+      "EE";
+  }
+
+  // versione (726 ecc)
+  const versione =
+    parts.find(
+      p =>
+        /^\d{3}$/.test(
+          p
+        )
+    );
+
+  if (versione) {
+    result.versione =
+      versione;
+  }
+
+  // periodo (Q32026)
+  const periodo =
+    parts.find(
+      p =>
+        /^Q\d\d{4}$/i.test(
+          p
+        )
+    );
+
+  if (periodo) {
+    result.periodo =
+      periodo.toUpperCase();
+  }
+
+  // costruzione prodotto
+  const esclusi =
+    new Set([
+      String(
+        result.codice_listino
+      ),
+
+      result.fornitore,
+
+      result.categoria_cliente,
+
+      result.formula,
+
+      result.commodity,
+
+      result.versione,
+
+      result.periodo,
+
+      "TRIO",
+
+      "MONO"
+    ]);
+
+  const prodottoParts =
+    parts.filter(
+      p =>
+        p &&
+        !esclusi.has(
+          p
+        )
+    );
+
+  result.prodotto =
+    prodottoParts
+      .join(" ")
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim() || null;
+
+  return result;
 }
 
-async function getAccessToken(env) {
+async function getAccessToken(
+  env
+) {
   const key =
     await importPKCS8(
       env.GOOGLE_PRIVATE_KEY,
@@ -290,33 +479,46 @@ async function getAccessToken(env) {
         "https://oauth2.googleapis.com/token"
       )
       .setIssuedAt()
-      .setExpirationTime("1h")
+      .setExpirationTime(
+        "1h"
+      )
       .sign(key);
 
   const response =
     await fetch(
       "https://oauth2.googleapis.com/token",
       {
-        method: "POST",
+        method:
+          "POST",
+
         headers: {
           "Content-Type":
             "application/x-www-form-urlencoded"
         },
+
         body:
-          new URLSearchParams({
-            grant_type:
-              "urn:ietf:params:oauth:grant-type:jwt-bearer",
-            assertion: jwt
-          })
+          new URLSearchParams(
+            {
+              grant_type:
+                "urn:ietf:params:oauth:grant-type:jwt-bearer",
+
+              assertion:
+                jwt
+            }
+          )
       }
     );
 
   const data =
     await response.json();
 
-  if (!data.access_token) {
+  if (
+    !data.access_token
+  ) {
     throw new Error(
-      JSON.stringify(data)
+      JSON.stringify(
+        data
+      )
     );
   }
 
