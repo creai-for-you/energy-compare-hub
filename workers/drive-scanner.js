@@ -1,73 +1,52 @@
 import { SignJWT, importPKCS8 } from "jose";
-import { createClient } from "@supabase/supabase-js";
 
 const ROOT_FOLDER_ID = "1TV9_3II1TWws17FD-tV9UurVMUIE-7o4";
 
 export default {
   async fetch(request, env) {
-    return Response.json(await runScanner(env));
-  }
-};
+    try {
+      const token = await getAccessToken(env);
 
-async function runScanner(env) {
-  const token = await getAccessToken(env);
+      const rootFolders = await getFolders(
+        token,
+        ROOT_FOLDER_ID
+      );
 
-  const supabase = createClient(
-    env.SUPABASE_URL,
-    env.SUPABASE_SERVICE_KEY
-  );
+      const result = [];
 
-  const folders = await getFolders(
-    token,
-    ROOT_FOLDER_ID
-  );
+      for (const folder of rootFolders) {
+        try {
+          const pdfs = await getPdfs(
+            token,
+            folder.id
+          );
 
-  let totalPdf = 0;
-  let insertOk = 0;
-  const errors = [];
-
-  for (const folder of folders) {
-    const pdfs = await getPdfs(
-      token,
-      folder.id
-    );
-
-    totalPdf += pdfs.length;
-
-    for (const pdf of pdfs) {
-      const { error } = await supabase
-        .from("repository_drive")
-        .upsert(
-          {
-            google_file_id: pdf.id,
-            nome_file: pdf.name,
-            ultima_modifica: pdf.modifiedTime,
-            url_file: pdf.webViewLink,
-            categoria_drive: folder.name,
-            ultima_scansione:
-              new Date().toISOString()
-          },
-          {
-            onConflict: "google_file_id"
-          }
-        );
-
-      if (error) {
-        errors.push(error.message);
-      } else {
-        insertOk++;
+          result.push({
+            cartella: folder.name,
+            pdf: pdfs.length
+          });
+        } catch (err) {
+          result.push({
+            cartella: folder.name,
+            errore: err.message
+          });
+        }
       }
+
+      return Response.json({
+        success: true,
+        result
+      });
+
+    } catch (error) {
+      return Response.json({
+        success: false,
+        error: error.message,
+        stack: error.stack
+      });
     }
   }
-
-  return {
-    success: true,
-    cartelle: folders.length,
-    pdf_trovati: totalPdf,
-    inseriti: insertOk,
-    errori: errors.slice(0, 20)
-  };
-}
+};
 
 async function getFolders(token, parentId) {
   const response = await fetch(
@@ -92,7 +71,8 @@ async function getFolders(token, parentId) {
 
 async function getPdfs(token, folderId) {
   const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType='application/pdf'+and+trashed=false&fields=files(id,name,modifiedTime,webViewLink)`,
+    `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType='application/pdf'+and+trashed=false&fields=files(id,name)`
+    ,
     {
       headers: {
         Authorization: `Bearer ${token}`
