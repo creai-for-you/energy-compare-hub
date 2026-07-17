@@ -207,3 +207,107 @@ Creare prima un prototipo minimo che:
 3. stampa il risultato
 
 Solo dopo implementare il parser completo.
+
+## Test pdf-parse
+
+Data: 2026-07-17
+
+Esito:
+
+❌ NON compatibile con Cloudflare Worker
+
+Errore:
+
+No matching export for import "default"
+
+Decisione:
+
+Non utilizzare pdf-parse nel runtime Cloudflare.
+
+Valutare parser PDF esterno oppure funzione server dedicata.
+
+## Verifica PDF Parser
+
+Data: 2026-07-17
+
+### Test eseguito
+
+PDF testato:
+
+47432_SEGNOVERDE_DOM_FIX_SICURA_GAS_726_Q32026.pdf
+
+Risultato:
+
+✅ PDF leggibile correttamente
+
+Tecnologia:
+
+pdf-parse v2.4.5
+
+Utilizzo corretto:
+
+```js
+import { PDFParse } from "pdf-parse";
+
+const parser = new PDFParse({ data: buffer });
+const result = await parser.getText();
+# Milestone 2026-07-17 - PDF Parser V1
+
+## Obiettivo raggiunto
+
+Implementato parser PDF Segnoverde funzionante.
+
+## Test effettuato
+
+PDF:
+47432_SEGNOVERDE_DOM_FIX_SICURA_GAS_726_Q32026.pdf
+
+## Risultato
+
+Estrazione corretta dei seguenti campi:
+
+- codice_listino
+- codice_offerta
+- nome_offerta
+- quota_fissa_annua
+- prezzo_fisso
+- sconto_annuo
+- sconto_sdd
+- sconto_mail
+
+## Database
+
+Tabella:
+offerte_pdf
+
+Inserimento record verificato con successo.
+
+## Dati salvati
+
+- codice_listino: 47432
+- nome_offerta: Sicura
+- commodity: GAS
+- mercato: LIBERO
+- tipo_prezzo: FISSO
+
+## Note architetturali
+
+pdf-parse funziona correttamente in Node.js.
+
+Non utilizzare all'interno dei Cloudflare Worker.
+
+Architettura approvata:
+
+Google Drive
+↓
+repository_drive
+↓
+pdf-parser (Node)
+↓
+offerte_pdf
+↓
+offerte_prezzi
+
+## Prossimo step
+
+Import automatico PDF da repository_drive.
