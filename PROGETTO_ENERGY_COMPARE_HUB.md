@@ -311,3 +311,92 @@ offerte_prezzi
 ## Prossimo step
 
 Import automatico PDF da repository_drive.
+# Milestone PDF Parser V1 (17/07/2026)
+
+## Stato
+
+COMPLETATA ✅
+
+## Obiettivo
+
+Verificare la possibilità di estrarre automaticamente i dati dalle Condizioni Economiche PDF di Segnoverde e salvarli in Supabase.
+
+## Attività completate
+
+- Installazione pdf-parse
+- Validazione lettura PDF in ambiente Node.js
+- Implementazione parser PDF
+- Estrazione campi tramite regex
+- Generazione hash SHA256 del file
+- Inserimento automatico nella tabella offerte_pdf
+- Test completo con PDF Segnoverde
+
+## PDF testato
+
+47432_SEGNOVERDE_DOM_FIX_SICURA_GAS_726_Q32026.pdf
+
+## Dati estratti correttamente
+
+- codice_listino
+- codice_offerta
+- nome_offerta
+- commodity
+- mercato
+- tipo_prezzo
+- prezzo_fisso
+- quota_fissa_annua
+- sconto_annuo
+- sconto_sdd
+- sconto_mail
+
+## Output salvato
+
+Tabella:
+
+offerte_pdf
+
+Record inserito con successo.
+
+## Decisioni architetturali
+
+pdf-parse funziona correttamente in Node.js.
+
+Cloudflare Worker non verrà utilizzato per il parsing PDF.
+
+Architettura approvata:
+
+Google Drive
+↓
+repository_drive
+↓
+pdf-parser (Node)
+↓
+offerte_pdf
+↓
+offerte_prezzi
+
+## Git
+
+Commit:
+5679a84
+
+Tag:
+pdf-parser-v1
+
+## Prossima milestone
+
+Automazione import PDF dal repository Google Drive.
+
+Flusso previsto:
+
+repository_drive
+↓
+download automatico PDF
+↓
+pdf-parser
+↓
+offerte_pdf
+
+Obiettivo:
+
+eliminare completamente l'utilizzo di PDF locali.
