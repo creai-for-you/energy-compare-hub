@@ -167,9 +167,9 @@ async function parsePdf() {
       );
 
       const tipoPrezzo =
-        /OFFERTA A PREZZO VARIABILE/i.test(text)
-          ? "VARIABILE"
-          : "FISSO";
+    record.nome_file.includes("_FIX_")
+    ? "FISSO"
+    : "VARIABILE";
 
       const indice =
         record.commodity === "EE"
