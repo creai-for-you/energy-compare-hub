@@ -400,3 +400,704 @@ offerte_pdf
 Obiettivo:
 
 eliminare completamente l'utilizzo di PDF locali.
+
+# Milestone PDF Parser V2 (17/07/2026)
+
+## Stato
+
+IN SVILUPPO ⏳
+
+## Obiettivo
+
+Collegare il parser PDF esistente ai documenti presenti in Google Drive tramite repository_drive.
+
+## Attività completate
+
+### Verifica parser esistente
+
+File:
+
+workers/pdf-parser.js
+
+Stato:
+
+✅ individuato
+
+Architettura attuale:
+
+PDF locale
+↓
+fs.readFileSync()
+↓
+PDFParse
+↓
+offerte_pdf
+
+### Verifica accesso Supabase
+
+File:
+
+src/lib/supabase.js
+
+Esito:
+
+✅ connessione funzionante
+
+### Verifica repository_drive
+
+Test eseguito:
+
+select * from repository_drive limit 1
+
+Esito:
+
+✅ lettura corretta
+
+Record verificato:
+
+- google_file_id presente
+- nome_file presente
+- metadata presenti
+
+PDF test:
+
+47406_SEGNOVERDE_DOM_PUN_PER_NOI_EE_TRIO_726_Q32026.pdf
+
+Google File Id:
+
+1_h7FofpXmr2WEF8JI8puWi-qlDZvmLvj
+
+### Verifica autenticazione Google Drive
+
+Funzione individuata:
+
+getAccessToken()
+
+File:
+
+workers/drive-scanner.js
+
+Esito:
+
+✅ funzione recuperata
+
+Variabili utilizzate:
+
+- GOOGLE_CLIENT_EMAIL
+- GOOGLE_PRIVATE_KEY
+
+### Verifica Cloudflare Secrets
+
+Comando:
+
+npx wrangler secret list
+
+Risultato:
+
+✅ GOOGLE_CLIENT_EMAIL
+✅ GOOGLE_PRIVATE_KEY
+✅ SUPABASE_URL
+✅ SUPABASE_SERVICE_KEY
+
+## Stato attuale del parser
+
+Modifica temporanea applicata:
+
+workers/pdf-parser.js
+
+Inserita lettura repository_drive con:
+
+.select("*")
+.limit(1)
+
+Inserito:
+
+return;
+
+subito dopo il test.
+
+Scopo:
+
+evitare esecuzione del parser PDF durante lo sviluppo del collegamento Google Drive.
+
+## Prossimo step
+
+Recuperare le credenziali Google utilizzate dal parser Node e implementare il download del PDF tramite:
+
+repository_drive
+↓
+google_file_id
+↓
+Google Drive API
+↓
+Buffer PDF
+
+Solo dopo:
+
+Buffer PDF
+↓
+PDFParse
+↓
+offerte_pdf
+
+### Recupero credenziali Google
+
+Data: 2026-07-17
+
+Service Account identificato:
+
+cloudflare-drive-scanner@energy-compare-hub.iam.gserviceaccount.com
+
+Origine:
+Google Cloud Console
+→ IAM e amministrazione
+→ Account di servizio
+
+Stato:
+
+✅ GOOGLE_CLIENT_EMAIL identificato
+
+Variabile Cloudflare:
+
+GOOGLE_CLIENT_EMAIL
+
+### Recupero credenziali Google completato
+
+Data: 2026-07-17
+
+Service Account:
+
+cloudflare-drive-scanner@energy-compare-hub.iam.gserviceaccount.com
+
+Chiave privata:
+
+private-key.pem
+
+Formato verificato:
+
+-----BEGIN PRIVATE KEY-----
+
+Stato:
+
+✅ GOOGLE_CLIENT_EMAIL identificato
+✅ GOOGLE_PRIVATE_KEY disponibile
+✅ Credenziali sufficienti per autenticazione Google Drive da Node.js
+### Verifica dipendenze Node
+
+Data: 2026-07-17
+
+Libreria:
+
+jose@6.2.3
+
+Comando:
+
+npm list jose
+
+Esito:
+
+✅ installata
+
+Utilizzo previsto:
+
+- generazione JWT Google
+- autenticazione Service Account
+- ottenimento access token Drive
+
+Stato:
+
+✅ prerequisiti completati per download PDF da Google Drive
+### Verifica ambiente Node
+
+Data: 2026-07-17
+
+package.json verificato.
+
+Configurazione:
+
+"type": "module"
+
+Dipendenze disponibili:
+
+- jose 6.2.3
+- pdf-parse 2.4.5
+- @supabase/supabase-js 2.110.4
+
+Esito:
+
+✅ compatibile con import ESM
+
+Stato:
+
+pronto per implementazione autenticazione Google Drive da Node.js
+## Milestone PDF Parser V2 - Google Authentication
+
+Data: 2026-07-17
+
+Stato:
+
+COMPLETATA ✅
+
+Attività:
+
+- Recuperato GOOGLE_CLIENT_EMAIL
+- Recuperata chiave privata Service Account
+- Portata funzione getAccessToken() da Cloudflare a Node.js
+- Generato JWT Google
+- Ottenuto access_token valido
+
+Service Account:
+
+cloudflare-drive-scanner@energy-compare-hub.iam.gserviceaccount.com
+
+Test eseguito:
+
+node workers/pdf-parser.js
+
+Risultato:
+
+✅ access_token ottenuto
+
+Durata token:
+
+3599 secondi
+
+Conclusione:
+
+Il parser Node è ora autenticato verso Google Drive.
+
+Prossimo step:
+
+download PDF tramite google_file_id.
+## Milestone PDF Parser V2 - Download Google Drive
+
+Data: 2026-07-17
+
+Stato:
+
+COMPLETATA ✅
+
+Attività completate:
+
+- lettura repository_drive
+- recupero google_file_id
+- autenticazione Google Service Account
+- generazione access token
+- download PDF da Google Drive
+
+PDF testato:
+
+47406_SEGNOVERDE_DOM_PUN_PER_NOI_EE_TRIO_726_Q32026.pdf
+
+Google File ID:
+
+1_h7FofpXmr2WEF8JI8puWi-qlDZvmLvj
+
+Risultato:
+
+DOWNLOAD STATUS: 200
+
+Dimensione PDF:
+
+771940 byte
+
+Conclusione:
+
+Il parser Node è in grado di scaricare direttamente i PDF da Google Drive senza utilizzare file locali.
+
+Pipeline verificata:
+
+repository_drive
+↓
+google_file_id
+↓
+Google Drive API
+↓
+PDF Buffer
+## Milestone PDF Parser V2 - Parsing PDF da Google Drive
+
+Data: 2026-07-17
+
+Stato:
+
+COMPLETATA ✅
+
+Attività:
+
+- download PDF da Google Drive
+- conversione in Buffer
+- parsing PDF tramite PDFParse
+- estrazione testo
+
+PDF testato:
+
+47406_SEGNOVERDE_DOM_PUN_PER_NOI_EE_TRIO_726_Q32026.pdf
+
+Risultati:
+
+DOWNLOAD STATUS: 200
+
+PDF BUFFER SIZE:
+771940
+
+LUNGHEZZA TESTO:
+28433
+
+Campi verificati nel testo:
+
+✅ CODICE LISTINO
+✅ CODICE OFFERTA
+✅ Prodotto Partner
+✅ CLIENTE DOMESTICO
+✅ OFFERTA A PREZZO VARIABILE
+
+Conclusione:
+
+Non è più necessario utilizzare file PDF locali.
+
+Pipeline validata:
+
+Google Drive
+↓
+repository_drive
+↓
+google_file_id
+↓
+download PDF
+↓
+PDFParse
+↓
+testo PDF
+
+## Milestone PDF Parser V2 - Estrazione dati da PDF Drive
+
+Data: 2026-07-17
+
+Stato:
+
+COMPLETATA ✅
+
+Attività:
+
+- download PDF da Google Drive
+- parsing PDF tramite PDFParse
+- estrazione dati tramite regex
+
+PDF:
+
+47406_SEGNOVERDE_DOM_PUN_PER_NOI_EE_TRIO_726_Q32026.pdf
+
+Dati estratti:
+
+- codiceListino
+- codiceOfferta
+- prodotto
+- clienteDomestico
+- prezzoVariabile
+- prezzoFisso
+
+Output:
+
+{
+  "codiceListino": "47406",
+  "codiceOfferta": "000453ENVFL01XX47406PERXNOIXXSEV",
+  "prodotto": "PER NOI",
+  "clienteDomestico": true,
+  "prezzoVariabile": true,
+  "prezzoFisso": false
+}
+
+Conclusione:
+
+Il parser è in grado di leggere un PDF direttamente da Google Drive ed estrarre informazioni strutturate senza utilizzare file locali.
+## Milestone PDF Parser V2 - Offerta normalizzata
+
+Data: 2026-07-17
+
+Stato:
+
+COMPLETATA ✅
+
+Risultato:
+
+Primo PDF Google Drive convertito in struttura dati compatibile con offerte_pdf.
+
+Valori verificati:
+
+- codice_listino
+- codice_offerta
+- nome_offerta
+- commodity
+- tipologia_cliente
+- mercato
+- tipo_prezzo
+- indice_riferimento
+- spread
+- quota_fissa_annua
+
+Output:
+
+spread = 0.0077
+quota_fissa_annua = 69
+
+Conclusione:
+
+La pipeline Google Drive → PDF → Dati Strutturati è funzionante.
+
+## Milestone PDF Parser V2 - Primo inserimento automatico
+
+Data: 2026-07-17
+
+Stato:
+
+COMPLETATA ✅
+
+Pipeline validata:
+
+Google Drive
+↓
+Download PDF
+↓
+PDFParse
+↓
+Regex
+↓
+Normalizzazione
+↓
+offerte_pdf
+
+Risultato:
+
+Record creato con id = 5
+
+Offerta:
+
+PER NOI
+
+Codice listino:
+
+47406
+
+Codice offerta:
+
+000453ENVFL01XX47406PERXNOIXXSEV
+
+Commodity:
+
+EE
+
+Tipo prezzo:
+
+VARIABILE
+
+Indice:
+
+PUN
+
+Spread:
+
+0.0077 €/kWh
+
+Quota fissa annua:
+
+69 €/POD/Anno
+
+Conclusione:
+
+La catena end-to-end è operativa.
+
+# Milestone PDF Parser V2
+
+Data: 2026-07-17
+
+## Obiettivo
+
+Importare automaticamente le offerte commerciali partendo dai PDF presenti su Google Drive.
+
+## Stato
+
+COMPLETATA ✅
+
+## Pipeline realizzata
+
+repository_drive
+↓
+Google Drive API
+↓
+Download PDF
+↓
+PDFParse
+↓
+Estrazione dati
+↓
+Normalizzazione
+↓
+SHA256
+↓
+UPSERT offerte_pdf
+
+## Risultati ottenuti
+
+- Autenticazione Google Service Account
+- Download PDF da Google Drive
+- Parsing automatico PDF
+- Estrazione campi principali
+- Calcolo hash SHA256
+- Gestione duplicati tramite upsert
+- Import batch di tutti i PDF presenti nel repository
+- Normalizzazione offerte
+- Classificazione linea_prodotto
+- Correzione indice_riferimento EE/GAS
+
+## Dati caricati
+
+Totale PDF repository_drive:
+
+38
+
+Importati:
+
+37
+
+Errore residuo:
+
+1 PDF con errore Google Drive 500
+
+## Classificazione linea_prodotto
+
+- AGILE FLEX
+- AGILE PREMIUM
+- CONDOMINIO GREEN PLUS
+- IMPRESA VERDE SMALL
+- OFFERTA SECONDA CASA
+- PER NOI
+- SEGNO-V GAS
+- SEGNO-V GAS FIX
+- SEGNO-V GAS RELAX
+- SEGNO-V LUCE
+- SEGNO-V LUCE FIX
+- SICURA
+- SMART
+- SMART TEMP
+
+## Correzioni effettuate
+
+### AGILE FLEX
+
+47411
+47464
+
+### AGILE PREMIUM
+
+47410
+47463
+
+### Indice riferimento
+
+Regola adottata:
+
+EE → PUN
+
+GAS → PSV
+
+Verifica finale:
+
+EE  → PUN → 14 record
+
+GAS → PSV → 23 record
+
+## Stato tabella offerte_pdf
+
+Campi popolati:
+
+- codice_listino
+- codice_offerta
+- nome_offerta
+- linea_prodotto
+- commodity
+- tipologia_cliente
+- mercato
+- tipo_prezzo
+- indice_riferimento
+- spread
+- quota_fissa_annua
+- hash_file
+- metadata
+
+## Attività successive
+
+1. Estrazione prezzo_fisso
+2. Miglioramento estrazione spread
+3. Estrazione sconto_annuo
+4. Estrazione sconto_sdd
+5. Estrazione sconto_mail
+6. Estrazione validita_dal
+7. Estrazione validita_al
+
+## Conclusione
+
+Parser V2 operativo end-to-end.
+
+L'infrastruttura di acquisizione PDF da Google Drive, parsing e caricamento su offerte_pdf è completata e funzionante.
+# Parser PDF V2 - STABILE
+
+Data: 17/07/2026
+
+## Stato
+
+COMPLETATO ✅
+
+## Risultati
+
+PDF TROVATI: 38
+IMPORTATI: 38
+ERRORI: 0
+
+## Funzionalità
+
+- Download PDF da Google Drive
+- Parsing PDF automatico
+- SHA256 hash
+- UPSERT Supabase
+- Gestione duplicati
+- Classificazione offerte
+- Classificazione linea_prodotto
+- Correzione indice riferimento
+  - EE -> PUN
+  - GAS -> PSV
+
+## Dati estratti
+
+- codice_listino
+- codice_offerta
+- nome_offerta
+- commodity
+- tipologia_cliente
+- tipo_prezzo
+- indice_riferimento
+- spread
+- prezzo_fisso
+- quota_fissa_annua
+- metadata
+
+## Prezzi fissi rilevati
+
+SICURA EE
+0.1463 €/kWh
+
+SICURA GAS
+0.4690 €/Smc
+
+SEGNO-V GAS FIX
+0.5200 €/Smc
+
+SEGNO-V GAS RELAX
+0.5300 €/Smc
+
+SMART FIX GAS
+0.5530 €/Smc
+
+## KPI
+
+38 PDF importati
+0 errori
