@@ -1,5 +1,14 @@
 # Energy Compare Hub
+ Cloudflare Pages + Supabase
+Gratuito per partire.
+Hai:
 
+✅ Frontend web
+✅ Database PostgreSQL
+✅ Login amministratore
+✅ Hosting gratuito
+✅ HTTPS
+✅ Dominio personalizzato Aruba
 ## Stato attuale
 
 ### Completato ✅
