@@ -2,127 +2,335 @@ import crypto from "crypto";
 import { supabase } from "../src/lib/supabase.js";
 import fs from "fs";
 import { PDFParse } from "pdf-parse";
+import { SignJWT, importPKCS8 } from "jose";
+
+const GOOGLE_CLIENT_EMAIL =
+  "cloudflare-drive-scanner@energy-compare-hub.iam.gserviceaccount.com";
 
 function extract(text, regex) {
   return text.match(regex)?.[1]?.trim() || null;
 }
 
-async function parsePdf() {
-  const buffer = fs.readFileSync(
-    "/Users/cri/Downloads/47432_SEGNOVERDE_DOM_FIX_SICURA_GAS_726_Q32026.pdf"
+async function getAccessToken() {
+  const privateKey = fs.readFileSync(
+    "./private-key.pem",
+    "utf8"
   );
 
-  const hashFile = crypto
-    .createHash("sha256")
-    .update(buffer)
-    .digest("hex");
+  const key = await importPKCS8(
+    privateKey,
+    "RS256"
+  );
 
-  const parser = new PDFParse({ data: buffer });
-  const result = await parser.getText();
-
-  const text = result.text;
-
-  const data = {
-    codiceListino: extract(
-      text,
-      /CODICE LISTINO:\s*(\d+)/i
-    ),
-
-    codiceOfferta: extract(
-      text,
-      /CODICE OFFERTA:\s*([A-Z0-9]+)/i
-    ),
-
-    prodotto: extract(
-      text,
-      /Prodotto Partner:\s*([^.\n]+)/i
-    ),
-
-    quotaFissa: extract(
-      text,
-      /Corrispettivo Annuo\s*([\d.,]+)\s*€\/PDR\/Anno/i
-    ),
-
-    quotaConsumo: extract(
-      text,
-      /Corrispettivo per il consumo\s*([\d.,]+)\s*€\/Smc/i
-    ),
-
-    scontoSegnoVerde: extract(
-      text,
-      /Sconto Corrispettivo Segno Verde\)[\s\S]*?pari a\s*([\d.,]+)\s*€\/PDR\/anno/i
-    ),
-
-    scontoMail: extract(
-      text,
-      /Sconto per invio fattura tramite mail\)[\s\S]*?pari a\s*([\d.,]+)\s*€\/PDR\/anno/i
-    ),
-
-    scontoSDD: extract(
-      text,
-      /Sconto SDD\)[\s\S]*?pari a\s*([\d.,]+)\s*€\/PDR\/anno/i
-    ),
-  };
-
-  console.log(JSON.stringify(data, null, 2));
-
-  const { data: inserted, error } = await supabase
-    .from("offerte_pdf")
-    .insert({
-      nome_file:
-        "47432_SEGNOVERDE_DOM_FIX_SICURA_GAS_726_Q32026.pdf",
-
-      hash_file: hashFile,
-
-      codice_listino: data.codiceListino,
-
-      codice_offerta: data.codiceOfferta,
-
-      nome_offerta: data.prodotto,
-
-      commodity: "GAS",
-
-      mercato: "LIBERO",
-
-      tipo_prezzo: "FISSO",
-
-      prezzo_fisso: Number(
-        data.quotaConsumo.replace(",", ".")
-      ),
-
-      quota_fissa_annua: Number(
-        data.quotaFissa.replace(",", ".")
-      ),
-
-      sconto_annuo: Number(
-        data.scontoSegnoVerde.replace(",", ".")
-      ),
-
-      sconto_sdd: Number(
-        data.scontoSDD.replace(",", ".")
-      ),
-
-      sconto_mail: Number(
-        data.scontoMail.replace(",", ".")
-      ),
-
-      stato: "ATTIVA",
-
-      data_import: new Date(),
-
-      ultima_verifica: new Date(),
-
-      metadata: data
+  const jwt = await new SignJWT({
+    scope:
+      "https://www.googleapis.com/auth/drive.readonly"
+  })
+    .setProtectedHeader({
+      alg: "RS256",
+      typ: "JWT"
     })
-    .select();
+    .setIssuer(
+      GOOGLE_CLIENT_EMAIL
+    )
+    .setAudience(
+      "https://oauth2.googleapis.com/token"
+    )
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(key);
 
-  console.log("\nINSERT");
-  console.log(inserted);
+  const response = await fetch(
+    "https://oauth2.googleapis.com/token",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({
+        grant_type:
+          "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt
+      })
+    }
+  );
 
-  console.log("\nERROR");
-  console.log(error);
+  return await response.json();
+}
+
+async function parsePdf() {
+  const {
+    data: repository,
+    error: repositoryError
+  } = await supabase
+    .from("repository_drive")
+    .select("*");
+
+  if (repositoryError) {
+    console.error(repositoryError);
+    return;
+  }
+
+  console.log(
+    `\nPDF TROVATI: ${repository.length}`
+  );
+
+  const token = await getAccessToken();
+
+  let success = 0;
+  let failed = 0;
+
+  for (const record of repository) {
+    try {
+      console.log(
+        "\n=============================="
+      );
+
+      console.log(
+        `PROCESSO: ${record.nome_file}`
+      );
+
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${record.google_file_id}?alt=media`,
+        {
+          headers: {
+            Authorization: `Bearer ${token.access_token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Download error ${response.status}`
+        );
+      }
+
+      const arrayBuffer =
+        await response.arrayBuffer();
+
+      const pdfBuffer =
+        Buffer.from(arrayBuffer);
+
+      const hashFile = crypto
+        .createHash("sha256")
+        .update(pdfBuffer)
+        .digest("hex");
+
+      const parser = new PDFParse({
+        data: pdfBuffer
+      });
+
+      const result =
+        await parser.getText();
+
+      const text =
+        result.text;
+        
+      const codiceListino = extract(
+        text,
+        /CODICE LISTINO:\s*(\d+)/i
+      );
+
+      const codiceOfferta = extract(
+        text,
+        /CODICE OFFERTA:\s*([A-Z0-9]+)/i
+      );
+
+      const prodotto = extract(
+        text,
+        /Prodotto Partner:\s*([^.\n]+)/i
+      );
+
+      const quotaFissa = extract(
+        text,
+        /Corrispettivo Annuo\s*([\d.,]+)\s*€\/(?:POD|PDR)\/Anno/i
+      );
+      
+        const prezzoFissoGas = extract(
+        text,
+        /Corrispettivo per il consumo\s*([\d.,]+)\s*€\/Smc/i
+        );
+
+        const prezzoFissoEE = extract(
+     text,
+     /Corrispettivo per il consumo\s*([\d.,]+)\s*€\/kWh/i
+    );
+      const spreadPUN = extract(
+        text,
+        /PUN\s*\+\s*([\d.,]+)\s*€\/kWh/i
+      );
+
+      const spreadPSV = extract(
+        text,
+        /PSV\s*\+\s*([\d.,]+)\s*€\/Smc/i
+      );
+
+      const tipoPrezzo =
+        /OFFERTA A PREZZO VARIABILE/i.test(text)
+          ? "VARIABILE"
+          : "FISSO";
+
+      const indice =
+        record.commodity === "EE"
+          ? "PUN"
+          : record.commodity === "GAS"
+          ? "PSV"
+          : null;
+
+      const offerta = {
+        nome_file:
+          record.nome_file,
+
+        hash_file:
+          hashFile,
+
+        codice_listino:
+          codiceListino,
+
+        codice_offerta:
+          codiceOfferta,
+
+        nome_offerta:
+          prodotto,
+
+        commodity:
+          record.commodity,
+
+        tipologia_cliente:
+          record.categoria_cliente,
+
+        mercato:
+          "LIBERO",
+
+        tipo_prezzo:
+          tipoPrezzo,
+
+        indice_riferimento:
+          indice,
+
+        prezzo_fisso:
+        tipoPrezzo === "FISSO"
+        ? Number(
+        (
+          prezzoFissoGas ||
+          prezzoFissoEE
+        )?.replace(",", ".")
+        )
+        : null,
+
+        spread:
+          spreadPUN
+            ? Number(
+                spreadPUN.replace(",", ".")
+              )
+            : spreadPSV
+            ? Number(
+                spreadPSV.replace(",", ".")
+              )
+            : null,
+
+        cap_valore: null,
+
+        quota_fissa_annua:
+          quotaFissa
+            ? Number(
+                quotaFissa.replace(",", ".")
+              )
+            : null,
+
+        sconto_annuo: null,
+        sconto_sdd: null,
+        sconto_mail: null,
+
+        spread_rinnovo: null,
+        rinnovo_mesi: null,
+
+        validita_dal: null,
+        validita_al: null,
+
+        data_import:
+          new Date(),
+
+        ultima_verifica:
+          new Date(),
+
+        stato: "ATTIVA",
+
+        file_id_drive:
+          record.google_file_id,
+
+        metadata: {
+        codiceListino,
+        codiceOfferta,
+        prodotto,
+        quotaFissa,
+        spreadPUN,
+        spreadPSV,
+        prezzoFissoGas,
+        prezzoFissoEE
+        }
+      };
+
+      const { error } =
+        await supabase
+          .from("offerte_pdf")
+          .upsert(
+            offerta,
+            {
+              onConflict:
+                "hash_file"
+            }
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      console.log(
+        "✅ IMPORTATO"
+      );
+
+      success++;
+
+    } catch (err) {
+      console.error(
+        "❌ ERRORE"
+      );
+
+      console.error(
+        record.nome_file
+      );
+
+      console.error(
+        err.message
+      );
+
+      failed++;
+    }
+  }
+
+  console.log(
+    "\n=============================="
+  );
+
+  console.log(
+    `IMPORTATI: ${success}`
+  );
+
+  console.log(
+    `ERRORI: ${failed}`
+  );
 }
 
 parsePdf().catch((err) => {
+  console.error(
+    "\nERRORE COMPLETO:"
+  );
+
   console.error(err);
+
+  console.error(
+    err?.stack
+  );
 });
