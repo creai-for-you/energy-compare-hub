@@ -146,3 +146,64 @@ Prossima attività:
 Creazione worker dedicato:
 
 workers/pdf-parser.js
+## Fase PDF Parser
+
+2026-07-17
+
+Installazione libreria PDF:
+
+npm install pdf-parse
+
+Obiettivo:
+
+repository_drive
+↓
+pdf-parser
+↓
+offerte_pdf
+
+Stato:
+
+⏳ In sviluppo
+## Stato verificato 2026-07-17
+
+repository_drive:
+38 record
+
+offerte_pdf:
+0 record
+
+offerte_prezzi:
+4 record
+
+Parser PDF:
+Installato
+
+Libreria:
+pdf-parse
+
+Prossimo sviluppo:
+workers/pdf-parser.js
+## Verifica PDF Parser
+
+Data: 2026-07-17
+
+Libreria installata:
+
+pdf-parse@2.4.5
+
+Esito:
+
+Installazione completata.
+
+Da verificare compatibilità con Cloudflare Workers.
+
+Decisione:
+
+Creare prima un prototipo minimo che:
+
+1. legge un PDF dal Drive
+2. estrae il testo
+3. stampa il risultato
+
+Solo dopo implementare il parser completo.
