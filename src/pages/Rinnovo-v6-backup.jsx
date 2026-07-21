@@ -5,8 +5,7 @@ import { supabase } from "../lib/supabase";
 export default function Rinnovo() {
   const [testo, setTesto] = useState("");
   const [consumo, setConsumo] = useState(3000);
-const [profilo, setProfilo] =
-  useState("CLIENTE");
+
   const [pun, setPun] = useState(0);
   const [psv, setPsv] = useState(0);
 
@@ -141,19 +140,9 @@ const [profilo, setProfilo] =
         a.costoStimato -
         b.costoStimato
     );
-let classificaFiltrata =
-  classifica;
-
-if (profilo === "CLIENTE") {
-  classificaFiltrata =
-    classifica.filter(
-      (o) =>
-        o.canale !== "PER_NOI"
-    );
-}
 
   setMiglioriFisse(
-    classificaFiltrata
+    classifica
       .filter(
         (o) =>
           o.tipo_prezzo === "FISSO"
@@ -162,7 +151,7 @@ if (profilo === "CLIENTE") {
   );
 
   setMiglioriVariabili(
-    classificaFiltrata
+    classifica
       .filter(
         (o) =>
           o.tipo_prezzo ===
@@ -374,39 +363,6 @@ if (profilo === "CLIENTE") {
           marginBottom: "20px",
         }}
       >
-        <div
-  style={{
-    marginBottom: "20px",
-  }}
->
-  <label>Profilo</label>
-
-  <br />
-
-  <select
-    value={profilo}
-    onChange={(e) =>
-      setProfilo(e.target.value)
-    }
-    style={{
-      padding: "10px",
-      width: "250px",
-      marginTop: "10px",
-    }}
-  >
-    <option value="CLIENTE">
-      CLIENTE
-    </option>
-
-    <option value="DEALER">
-      DEALER
-    </option>
-
-    <option value="ADMIN">
-      ADMIN
-    </option>
-  </select>
-</div>
         <label>
           Consumo annuo (kWh / Smc)
         </label>
