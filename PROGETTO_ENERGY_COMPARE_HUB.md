@@ -1209,3 +1209,111 @@ Smart Temp
 Impresa Verde
 Segno-V
 ``
+
+# Tipologie Utente
+
+## Amministratore
+
+Può:
+
+- vedere tutte le offerte
+- vedere tutte le simulazioni
+- caricare e aggiornare listini
+- analizzare rinnovi commerciali
+- visualizzare statistiche globali
+- gestire dealer partner
+
+---
+
+## Dealer Partner
+
+Può:
+
+- analizzare bollette dei propri clienti
+- analizzare rinnovi commerciali
+- vedere solo le offerte disponibili al proprio canale
+- vedere il potenziale risparmio dei clienti
+- vedere se un'offerta genera gettone
+
+Non può:
+
+- vedere dati di altri dealer
+- modificare listini
+- accedere alle funzioni amministrative
+
+---
+
+## Cliente Finale
+
+Può:
+
+- caricare bollette
+- caricare rinnovi
+- ottenere simulazioni
+- confrontare offerte
+
+
+# Analisi Rinnovo Commerciale V1
+
+## Obiettivo
+
+Consentire all'utente di incollare una email di rinnovo
+oppure caricare un PDF di rinnovo.
+
+## Input
+
+Email
+
+oppure
+
+PDF
+
+## Estrazione
+
+- fornitore
+- nome offerta
+- prezzo energia
+- prezzo gas
+- spread
+- quota fissa
+- validità
+- data inizio
+- data fine
+
+## Output
+
+Costo stimato annuo dell'offerta proposta.
+
+Confronto con le offerte disponibili nel database.
+
+## Risultato
+
+Elenco offerte ordinate per convenienza.
+
+Risparmio stimato rispetto alla proposta ricevuta.
+
+## Analisi Rinnovo V1
+
+Stato: COMPLETATO ✅
+
+Funzionalità:
+
+- inserimento testo libero
+- parsing email
+- estrazione nome offerta
+- estrazione prezzo energia
+- estrazione quota annua
+- estrazione durata
+
+Prossimo step:
+
+- classificazione commodity
+- confronto con offerte_pdf
+- stima costo annuo
+- ranking offerte alternative
+✅ Analisi Rinnovo V1 completata
+Prossimo step:
+Analisi Rinnovo V2
+- riconoscimento commodity
+- riconoscimento prezzo fisso/variabile
+- confronto offerte_pdf

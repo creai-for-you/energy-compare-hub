@@ -43,122 +43,94 @@ export default function Rinnovo() {
   }
 
   async function caricaAlternative(
-  commodity,
-  costoRicevuto
-) {
-  const { data: offerteData, error } =
-    await supabase
+    commodity,
+    costoRicevuto
+  ) {
+    const { data, error } = await supabase
       .from("offerte_pdf")
       .select("*")
       .eq("commodity", commodity);
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+    if (error) {
+      console.error(error);
+      return;
+    }
 
-  const { data: repositoryData } =
-    await supabase
-      .from("repository_drive")
-      .select(
-        "codice_listino,categoria_drive"
+    const classifica = (data || [])
+      .map((o) => {
+        let costoStimato = 0;
+
+        if (
+          o.tipo_prezzo === "FISSO" &&
+          o.prezzo_fisso
+        ) {
+          costoStimato =
+            consumo *
+              Number(o.prezzo_fisso) +
+            Number(
+              o.quota_fissa_annua || 0
+            );
+        } else {
+          const prezzo =
+            commodity === "EE"
+              ? pun +
+                Number(o.spread || 0)
+              : psv +
+                Number(o.spread || 0);
+
+          costoStimato =
+            consumo * prezzo +
+            Number(
+              o.quota_fissa_annua || 0
+            );
+        }
+
+        let canale = "STANDARD";
+        let gettone = "SI";
+
+        if (
+          o.nome_offerta?.toUpperCase() ===
+          "PER NOI"
+        ) {
+          canale = "PER_NOI";
+          gettone = "NO";
+        }
+
+        return {
+          ...o,
+          canale,
+          gettone,
+          costoStimato,
+          risparmio:
+            costoRicevuto -
+            costoStimato,
+        };
+      })
+      .sort(
+        (a, b) =>
+          a.costoStimato -
+          b.costoStimato
       );
 
-  const repositoryMap = new Map();
-
-  (repositoryData || []).forEach((r) => {
-    repositoryMap.set(
-      String(r.codice_listino),
-      r.categoria_drive
-    );
-  });
-
-  const classifica = (offerteData || [])
-    .map((o) => {
-      let costoStimato = 0;
-
-      if (
-        o.tipo_prezzo === "FISSO" &&
-        o.prezzo_fisso
-      ) {
-        costoStimato =
-          consumo *
-            Number(o.prezzo_fisso) +
-          Number(
-            o.quota_fissa_annua || 0
-          );
-      } else {
-        const prezzo =
-          commodity === "EE"
-            ? pun +
-              Number(o.spread || 0)
-            : psv +
-              Number(o.spread || 0);
-
-        costoStimato =
-          consumo * prezzo +
-          Number(
-            o.quota_fissa_annua || 0
-          );
-      }
-
-      const categoriaDrive =
-        repositoryMap.get(
-          String(o.codice_listino)
-        ) || "";
-
-      let canale = "STANDARD";
-      let gettone = "SI";
-
-      if (
-        categoriaDrive === "PER NOI"
-      ) {
-        canale = "PER_NOI";
-        gettone = "NO";
-      } else if (
-        categoriaDrive ===
-        "LISTINI WEB"
-      ) {
-        canale = "WEB";
-        gettone = "NO";
-      }
-
-      return {
-        ...o,
-        categoriaDrive,
-        canale,
-        gettone,
-        costoStimato,
-        risparmio:
-          costoRicevuto -
-          costoStimato,
-      };
-    })
-    .sort(
-      (a, b) =>
-        a.costoStimato -
-        b.costoStimato
+    setMiglioriFisse(
+      classifica
+        .filter(
+          (o) =>
+            o.tipo_prezzo === "FISSO"
+        )
+        .slice(0, 5)
     );
 
-  setMiglioriFisse(
-    classifica
-      .filter(
-        (o) =>
-          o.tipo_prezzo === "FISSO"
-      )
-      .slice(0, 5)
-  );
-
-  setMiglioriVariabili(
-    classifica
-      .filter(
-        (o) =>
-          o.tipo_prezzo ===
-          "VARIABILE"
-      )
-      .slice(0, 5)
-  );
-}
+    setMiglioriVariabili(
+      classifica
+        .filter(
+          (o) =>
+            o.tipo_prezzo ===
+            "VARIABILE"
+        )
+        .slice(0, 5)
+    );
+  }
 
   async function analizza() {
     const nomeOfferta =
@@ -240,7 +212,6 @@ export default function Rinnovo() {
       prezzoGas,
       quotaAnnua,
       durata,
-      consumo,
       costoRicevuto,
     });
 
@@ -258,7 +229,8 @@ export default function Rinnovo() {
       <div
         key={offerta.codice_listino}
         style={{
-          border: "1px solid #ddd",
+          border:
+            "1px solid #ddd",
           borderRadius: "12px",
           padding: "15px",
           marginBottom: "12px",
@@ -278,10 +250,7 @@ export default function Rinnovo() {
           <strong>Canale:</strong>{" "}
           {offerta.canale}
         </p>
-        <p>
-         <strong>Categoria:</strong>{" "}
-         {offerta.categoriaDrive}
-        </p>
+
         <p>
           <strong>Gettone:</strong>{" "}
           {offerta.gettone}
@@ -295,45 +264,25 @@ export default function Rinnovo() {
         </p>
 
         <p>
-          <strong>
-            Quota annua:
-          </strong>{" "}
+          <strong>Quota annua:</strong>{" "}
           {offerta.quota_fissa_annua} €
         </p>
 
         <p>
-          <strong>
-            Costo stimato:
-          </strong>{" "}
+          <strong>Costo stimato:</strong>{" "}
           €
           {offerta.costoStimato.toFixed(
             2
           )}
         </p>
 
-        {offerta.risparmio >= 0 ? (
-  <p
-    style={{
-      color: "green",
-      fontWeight: "bold",
-    }}
-  >
-    🟢 Risparmio: €
-    {offerta.risparmio.toFixed(2)}
-  </p>
-) : (
-  <p
-    style={{
-      color: "red",
-      fontWeight: "bold",
-    }}
-  >
-    🔴 Maggior costo: €
-    {Math.abs(
-      offerta.risparmio
-    ).toFixed(2)}
-  </p>
-)}
+        <p>
+          <strong>Risparmio:</strong>{" "}
+          €
+          {offerta.risparmio.toFixed(
+            2
+          )}
+        </p>
       </div>
     );
   }
@@ -352,9 +301,9 @@ export default function Rinnovo() {
       </h1>
 
       <p>
-        <strong>PUN:</strong> {pun}
+        PUN attuale: <strong>{pun}</strong>
         {" | "}
-        <strong>PSV:</strong> {psv}
+        PSV attuale: <strong>{psv}</strong>
       </p>
 
       <div
@@ -373,7 +322,9 @@ export default function Rinnovo() {
           value={consumo}
           onChange={(e) =>
             setConsumo(
-              Number(e.target.value)
+              Number(
+                e.target.value
+              )
             )
           }
           style={{
@@ -410,7 +361,8 @@ export default function Rinnovo() {
         <div
           style={{
             marginTop: "30px",
-            border: "1px solid #ddd",
+            border:
+              "1px solid #ddd",
             borderRadius: "12px",
             padding: "20px",
           }}
@@ -434,51 +386,8 @@ export default function Rinnovo() {
             {risultato.tipoPrezzo}
           </p>
 
-          {risultato.prezzoLuce && (
-            <p>
-              <strong>
-                Prezzo luce:
-              </strong>{" "}
-              {risultato.prezzoLuce}
-              {" "}€/kWh
-            </p>
-          )}
-
-          {risultato.prezzoGas && (
-            <p>
-              <strong>
-                Prezzo gas:
-              </strong>{" "}
-              {risultato.prezzoGas}
-              {" "}€/Smc
-            </p>
-          )}
-
           <p>
-            <strong>
-              Quota annua:
-            </strong>{" "}
-            {risultato.quotaAnnua}
-            €
-          </p>
-
-          <p>
-            <strong>Durata:</strong>{" "}
-            {risultato.durata}
-            {" "}mesi
-          </p>
-
-          <p>
-            <strong>
-              Consumo:
-            </strong>{" "}
-            {risultato.consumo}
-          </p>
-
-          <p>
-            <strong>
-              Costo stimato:
-            </strong>{" "}
+            <strong>Costo stimato:</strong>{" "}
             €
             {risultato.costoRicevuto.toFixed(
               2
@@ -489,7 +398,11 @@ export default function Rinnovo() {
 
       {miglioriFisse.length > 0 && (
         <>
-          <h2 style={{ marginTop: "40px" }}>
+          <h2
+            style={{
+              marginTop: "40px",
+            }}
+          >
             🏆 Migliori 5 FISSE
           </h2>
 
@@ -503,9 +416,14 @@ export default function Rinnovo() {
         </>
       )}
 
-      {miglioriVariabili.length > 0 && (
+      {miglioriVariabili.length >
+        0 && (
         <>
-          <h2 style={{ marginTop: "40px" }}>
+          <h2
+            style={{
+              marginTop: "40px",
+            }}
+          >
             ⚡ Migliori 5 VARIABILI
           </h2>
 
