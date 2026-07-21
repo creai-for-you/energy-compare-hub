@@ -10,24 +10,74 @@ export default function Admin() {
   }, []);
 
   async function loadOfferte() {
-    const { data, error } = await supabase
-      .from("offerte_pdf")
-      .select("*")
-      .order("nome_offerta");
+    const { data: offerteData, error } =
+      await supabase
+        .from("offerte_pdf")
+        .select("*")
+        .order("nome_offerta");
 
     if (error) {
       console.error(error);
       return;
     }
 
-    setOfferte(data || []);
+    const { data: repositoryData } =
+      await supabase
+        .from("repository_drive")
+        .select(
+          "codice_listino,categoria_drive"
+        );
+
+    const repositoryMap = new Map();
+
+    (repositoryData || []).forEach((r) => {
+      repositoryMap.set(
+        String(r.codice_listino),
+        r.categoria_drive
+      );
+    });
+
+    const arricchite = (
+      offerteData || []
+    ).map((o) => {
+      const categoria =
+        repositoryMap.get(
+          String(o.codice_listino)
+        ) || "";
+
+      let canale = "STANDARD";
+      let gettone = "SI";
+
+      if (categoria === "PER NOI") {
+        canale = "PER_NOI";
+        gettone = "NO";
+      }
+
+      if (
+        categoria === "LISTINI WEB"
+      ) {
+        canale = "WEB";
+        gettone = "NO";
+      }
+
+      return {
+        ...o,
+        categoria_drive: categoria,
+        canale,
+        gettone,
+      };
+    });
+
+    setOfferte(arricchite);
   }
 
   const offerteFiltrate = offerte.filter(
     (o) =>
       o.nome_offerta
         ?.toLowerCase()
-        .includes(ricerca.toLowerCase()) ||
+        .includes(
+          ricerca.toLowerCase()
+        ) ||
       o.codice_listino
         ?.toString()
         .includes(ricerca)
@@ -51,6 +101,18 @@ export default function Admin() {
     (o) => o.spread !== null
   ).length;
 
+  const perNoi = offerte.filter(
+    (o) => o.canale === "PER_NOI"
+  ).length;
+
+  const web = offerte.filter(
+    (o) => o.canale === "WEB"
+  ).length;
+
+  const standard = offerte.filter(
+    (o) => o.canale === "STANDARD"
+  ).length;
+
   return (
     <div
       style={{
@@ -64,7 +126,7 @@ export default function Admin() {
         style={{
           display: "grid",
           gridTemplateColumns:
-            "repeat(5, 1fr)",
+            "repeat(8, 1fr)",
           gap: "20px",
           marginBottom: "30px",
         }}
@@ -74,9 +136,15 @@ export default function Admin() {
           valore={totale}
         />
 
-        <Card titolo="EE" valore={ee} />
+        <Card
+          titolo="EE"
+          valore={ee}
+        />
 
-        <Card titolo="GAS" valore={gas} />
+        <Card
+          titolo="GAS"
+          valore={gas}
+        />
 
         <Card
           titolo="Prezzi Fissi"
@@ -86,6 +154,21 @@ export default function Admin() {
         <Card
           titolo="Variabili"
           valore={variabili}
+        />
+
+        <Card
+          titolo="PER NOI"
+          valore={perNoi}
+        />
+
+        <Card
+          titolo="WEB"
+          valore={web}
+        />
+
+        <Card
+          titolo="STANDARD"
+          valore={standard}
         />
       </div>
 
@@ -116,6 +199,8 @@ export default function Admin() {
             <th>Offerta</th>
             <th>Commodity</th>
             <th>Tipo</th>
+            <th>Canale</th>
+            <th>Gettone</th>
             <th>Prezzo Fisso</th>
             <th>Spread</th>
             <th>Quota Annua</th>
@@ -132,6 +217,10 @@ export default function Admin() {
               <td>{o.commodity}</td>
 
               <td>{o.tipo_prezzo}</td>
+
+              <td>{o.canale}</td>
+
+              <td>{o.gettone}</td>
 
               <td>
                 {o.prezzo_fisso ?? "-"}
