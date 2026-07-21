@@ -9,6 +9,7 @@ Hai:
 ✅ Hosting gratuito
 ✅ HTTPS
 ✅ Dominio personalizzato Aruba
+
 ## Stato attuale
 
 ### Completato ✅
@@ -1110,3 +1111,101 @@ SMART FIX GAS
 
 38 PDF importati
 0 errori
+
+Parser V2 Stable ✅
+Database ✅
+Supabase ✅
+Cloudflare ✅
+
+Prossimo step:
+Frontend + Dashboard
+
+# Roadmap Evolutiva
+
+## Visione del Progetto
+
+Energy Compare Hub non è un semplice comparatore di offerte energetiche.
+
+L'obiettivo è sviluppare una piattaforma in grado di:
+
+- confrontare automaticamente le offerte del mercato
+- analizzare bollette e contratti esistenti
+- analizzare proposte di rinnovo commerciale
+- stimare il risparmio ottenibile
+- suggerire le alternative più convenienti
+
+---
+
+# Tipologie Cliente Supportate
+
+## Cliente Domestico
+
+Funzionalità previste:
+
+- caricamento bolletta luce
+- caricamento bolletta gas
+- caricamento proposta di rinnovo
+- simulazione tramite consumi manuali
+
+## Cliente Business
+
+Funzionalità previste:
+
+- analisi bollette business
+- confronto offerte dedicate
+- valutazione rinnovi commerciali
+- gestione multisito
+
+## Condomini
+
+Funzionalità previste:
+
+- confronto offerte condominiali
+- analisi proposta di rinnovo
+- monitoraggio costi energetici
+
+---
+
+# Analisi Bolletta
+
+## Input
+
+Upload PDF:
+
+```text
+bolletta_luce.pdf
+bolletta_gas.pdf
+
+# Regole Commerciali e Canali di Vendita
+
+## Obiettivo
+
+Non tutte le offerte presenti nel database possono essere proposte a tutti i clienti.
+
+Prima di generare una classifica o una raccomandazione, il sistema deve applicare le regole di visibilità commerciale.
+
+---
+
+# Classificazione Offerte
+
+## Offerte Standard
+
+Offerte liberamente vendibili dai dealer.
+
+Caratteristiche:
+
+- disponibili al pubblico
+- generano gettone dealer
+- possono essere mostrate a tutti i clienti compatibili
+
+Esempio:
+
+```text
+Sicura
+Agile Flex
+Agile Premium
+Smart
+Smart Temp
+Impresa Verde
+Segno-V
+``

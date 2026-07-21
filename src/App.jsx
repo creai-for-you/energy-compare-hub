@@ -133,6 +133,9 @@ function App() {
       ? risultatiLuce[risultatiLuce.length - 1].totale
       : 0
 
+      if (window.location.pathname === "/admin") {
+  return <Admin />;
+}
   return (
     <div
       style={{
