@@ -1,3 +1,4 @@
+import Rinnovo from "./pages/Rinnovo";
 import Admin from "./pages/Admin";
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
@@ -133,10 +134,15 @@ function App() {
       ? risultatiLuce[risultatiLuce.length - 1].totale
       : 0
 
-      if (window.location.pathname === "/admin") {
+      if (window.location.pathname === "/rinnovo") {
+  return <Rinnovo />;
+}
+
+if (window.location.pathname === "/admin") {
   return <Admin />;
 }
-  return (
+
+return (
     <div
       style={{
         maxWidth: '1200px',
