@@ -1317,3 +1317,109 @@ Analisi Rinnovo V2
 - riconoscimento commodity
 - riconoscimento prezzo fisso/variabile
 - confronto offerte_pdf
+
+Analisi Rinnovo V4
+
+Obiettivo:
+calcolo costo annuo e confronto offerte
+
+Input:
+- prezzo
+- quota annua
+- consumo annuo
+
+Output:
+- costo stimato attuale
+- ranking alternative
+- risparmio stimato
+Analisi Rinnovo V4
+
+Input:
+- prezzo
+- quota annua
+- consumo annuo manuale
+
+Output:
+- costo stimato offerta
+- confronto offerte
+- risparmio stimato
+
+Evoluzione:
+- import automatico consumi da bolletta
+## Analisi Rinnovo V4
+
+Stato: IN SVILUPPO
+
+Obiettivo:
+
+Calcolare il costo annuo stimato dell'offerta ricevuta e confrontarlo con le offerte presenti nel database.
+
+Input:
+
+- Prezzo energia
+- Quota annua
+- Durata
+- Consumo annuo
+
+Modalità consumo:
+
+### Modalità Manuale
+
+L'utente inserisce:
+
+- Consumo annuo energia (kWh)
+
+oppure
+
+✅ Analisi Rinnovo V5.2 completata
+
+- confronto offerte_pdf
+- canali reali
+- gettone
+- PUN e PSV reali
+- top 5 fisse
+- top 5 variabili
+- evidenza risparmio
+✅ Analisi Rinnovo V6.1 completata
+
+Profili supportati:
+
+- CLIENTE
+- DEALER
+- ADMIN
+
+Regole:
+
+CLIENTE
+→ STANDARD + WEB
+
+DEALER
+→ STANDARD + WEB + PER NOI
+
+ADMIN
+→ tutte le offerte
+
+Output:
+
+- Top 5 FISSE
+- Top 5 VARIABILI
+- Risparmio o maggior costo
+- Canale
+- Categoria
+- Gettone
+V7 - Analisi Bolletta
+
+Obiettivo:
+estrazione automatica consumo da PDF
+
+V7.1
+- upload PDF
+- identificazione fornitore
+- identificazione POD/PDR
+- identificazione consumo
+
+V7.2
+- integrazione con Analisi Rinnovo
+
+V7.3
+- confronto automatico offerte

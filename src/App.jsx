@@ -2,6 +2,7 @@ import Rinnovo from "./pages/Rinnovo";
 import Admin from "./pages/Admin";
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import Bolletta from "./pages/Bolletta";
 
 function App() {
   const [offerte, setOfferte] = useState([])
@@ -133,6 +134,10 @@ function App() {
     risultatiLuce.length > 0
       ? risultatiLuce[risultatiLuce.length - 1].totale
       : 0
+
+      if (window.location.pathname === "/bolletta") {
+  return <Bolletta />;
+}
 
       if (window.location.pathname === "/rinnovo") {
   return <Rinnovo />;

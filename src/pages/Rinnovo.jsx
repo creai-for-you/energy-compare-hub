@@ -21,8 +21,26 @@ const [profilo, setProfilo] =
   ] = useState([]);
 
   useEffect(() => {
-    caricaMercato();
-  }, []);
+  caricaMercato();
+
+  const profiloSalvato =
+    localStorage.getItem(
+      "profilo_bolletta"
+    );
+
+  if (profiloSalvato) {
+    const profilo =
+      JSON.parse(profiloSalvato);
+
+    if (profilo.consumoLuce) {
+      setConsumo(
+        Number(
+          profilo.consumoLuce
+        )
+      );
+    }
+  }
+}, []);
 
   async function caricaMercato() {
     const { data, error } = await supabase
