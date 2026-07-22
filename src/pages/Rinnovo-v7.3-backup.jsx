@@ -9,6 +9,9 @@ const [profilo, setProfilo] =
   useState("CLIENTE");
   const [pun, setPun] = useState(0);
   const [psv, setPsv] = useState(0);
+  
+const [profiloBolletta, setProfiloBolletta] =
+  useState(null);
 
   const [risultato, setRisultato] = useState(null);
 
@@ -29,17 +32,21 @@ const [profilo, setProfilo] =
     );
 
   if (profiloSalvato) {
-    const profilo =
-      JSON.parse(profiloSalvato);
+  const profilo =
+    JSON.parse(profiloSalvato);
 
-    if (profilo.consumoLuce) {
-      setConsumo(
-        Number(
-          profilo.consumoLuce
-        )
-      );
-    }
+  setProfiloBolletta(
+    profilo
+  );
+
+  if (profilo.consumoLuce) {
+    setConsumo(
+      Number(
+        profilo.consumoLuce
+      )
+    );
   }
+}
 }, []);
 
   async function caricaMercato() {
@@ -216,14 +223,37 @@ if (profilo === "CLIENTE") {
         /([0-9]+)\s*mesi/i
       )?.[1] || null;
 
-    let commodity =
-      "NON RILEVATA";
+    const profiloSalvato =
+  localStorage.getItem(
+    "profilo_bolletta"
+  );
 
-    if (/€\/kWh/i.test(testo))
-      commodity = "EE";
+if (profiloSalvato) {
+  const profilo =
+    JSON.parse(profiloSalvato);
 
-    if (/€\/Smc/i.test(testo))
-      commodity = "GAS";
+  if (
+    commodity === "EE" &&
+    profilo.consumoLuce
+  ) {
+    setConsumo(
+      Number(
+        profilo.consumoLuce
+      )
+    );
+  }
+
+  if (
+    commodity === "GAS" &&
+    profilo.consumoGas
+  ) {
+    setConsumo(
+      Number(
+        profilo.consumoGas
+      )
+    );
+  }
+}
 
     let tipoPrezzo =
       "NON RILEVATO";
@@ -380,7 +410,42 @@ if (profilo === "CLIENTE") {
       <h1>
         Analisi Rinnovo Commerciale
       </h1>
+{profiloBolletta && (
+  <div
+    style={{
+      marginTop: "20px",
+      marginBottom: "20px",
+      border: "1px solid #ddd",
+      padding: "20px",
+      borderRadius: "12px",
+      background: "#f9f9f9",
+    }}
+  >
+    <h2>
+      Profilo Bolletta
+    </h2>
 
+    <p>
+      <strong>Cliente:</strong>{" "}
+      {profiloBolletta.tipoCliente}
+    </p>
+
+    <p>
+      <strong>Consumo Luce:</strong>{" "}
+      {profiloBolletta.consumoLuce} kWh
+    </p>
+
+    <p>
+      <strong>Consumo Gas:</strong>{" "}
+      {profiloBolletta.consumoGas} Smc
+    </p>
+
+    <p>
+      <strong>Potenza:</strong>{" "}
+      {profiloBolletta.potenza} kW
+    </p>
+  </div>
+)}
       <p>
         <strong>PUN:</strong> {pun}
         {" | "}
