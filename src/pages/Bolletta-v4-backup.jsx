@@ -279,17 +279,18 @@ async function salvaProfilo() {
   }}
 >
   Usa per il confronto
-  </button>
-  
-<button
+  <button
   onClick={salvaProfilo}
   style={{
     padding: "12px 24px",
+    marginTop: "20px",
     marginLeft: "10px",
     cursor: "pointer",
   }}
 >
   Salva su Supabase
+</button>
+
 </button>
     </div>
   );

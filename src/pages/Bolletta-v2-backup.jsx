@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
 
 export default function Bolletta() {
   const [tipoCliente, setTipoCliente] =
@@ -22,50 +21,7 @@ export default function Bolletta() {
 
   const [spesaGas, setSpesaGas] =
     useState("");
-async function salvaProfilo() {
-  const { error } = await supabase
-    .from("profili_cliente")
-    .insert([
-      {
-        tipo_cliente: tipoCliente,
-        pod,
-        pdr,
 
-        consumo_luce:
-          consumoLuce === ""
-            ? null
-            : Number(consumoLuce),
-
-        consumo_gas:
-          consumoGas === ""
-            ? null
-            : Number(consumoGas),
-
-        potenza:
-          potenza === ""
-            ? null
-            : Number(potenza),
-
-        spesa_luce:
-          spesaLuce === ""
-            ? null
-            : Number(spesaLuce),
-
-        spesa_gas:
-          spesaGas === ""
-            ? null
-            : Number(spesaGas),
-      },
-    ]);
-
-  if (error) {
-    console.error(error);
-    alert("Errore durante il salvataggio.");
-    return;
-  }
-
-  alert("Profilo salvato su Supabase.");
-}
   return (
     <div
       style={{
@@ -279,17 +235,6 @@ async function salvaProfilo() {
   }}
 >
   Usa per il confronto
-  </button>
-  
-<button
-  onClick={salvaProfilo}
-  style={{
-    padding: "12px 24px",
-    marginLeft: "10px",
-    cursor: "pointer",
-  }}
->
-  Salva su Supabase
 </button>
     </div>
   );
