@@ -8,10 +8,10 @@ export default function Bolletta() {
   const [pdr, setPdr] = useState("");
 
   const [consumoLuce, setConsumoLuce] =
-    useState(3000);
+    useState("3000");
 
   const [consumoGas, setConsumoGas] =
-    useState(800);
+    useState("800");
 
   const [potenza, setPotenza] =
     useState(4.5);
@@ -78,7 +78,7 @@ export default function Bolletta() {
           value={consumoLuce}
           onChange={(e) =>
             setConsumoLuce(
-              Number(e.target.value)
+              (e.target.value)
             )
           }
         />
@@ -93,7 +93,7 @@ export default function Bolletta() {
           value={potenza}
           onChange={(e) =>
             setPotenza(
-              Number(e.target.value)
+              (e.target.value)
             )
           }
         />
@@ -137,7 +137,7 @@ export default function Bolletta() {
           value={consumoGas}
           onChange={(e) =>
             setConsumoGas(
-              Number(e.target.value)
+                (e.target.value)
             )
           }
         />
