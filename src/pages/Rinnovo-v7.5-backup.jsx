@@ -22,53 +22,27 @@ const [profilo, setProfilo] =
 
   useEffect(() => {
   caricaMercato();
-}, []);
 
-  async function caricaMercato() {
-    async function caricaUltimoProfilo() {
-  const { data, error } =
-    await supabase
-      .from("profili_cliente")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      })
-      .limit(1);
+  const profiloSalvato =
+    localStorage.getItem(
+      "profilo_bolletta"
+    );
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+  if (profiloSalvato) {
+    const profilo =
+      JSON.parse(profiloSalvato);
 
-  if (data?.length) {
-    const profilo = data[0];
-
-    setProfiloBolletta({
-      tipoCliente:
-        profilo.tipo_cliente,
-      pod: profilo.pod,
-      pdr: profilo.pdr,
-      consumoLuce:
-        profilo.consumo_luce,
-      consumoGas:
-        profilo.consumo_gas,
-      potenza:
-        profilo.potenza,
-      spesaLuce:
-        profilo.spesa_luce,
-      spesaGas:
-        profilo.spesa_gas,
-    });
-
-    if (profilo.consumo_luce) {
+    if (profilo.consumoLuce) {
       setConsumo(
         Number(
-          profilo.consumo_luce
+          profilo.consumoLuce
         )
       );
     }
   }
-}
+}, []);
+
+  async function caricaMercato() {
     const { data, error } = await supabase
       .from("mercato")
       .select("*")

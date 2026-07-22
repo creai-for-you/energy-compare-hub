@@ -22,6 +22,7 @@ const [profilo, setProfilo] =
 
   useEffect(() => {
   caricaMercato();
+  caricaUltimoProfilo();
 }, []);
 
   async function caricaMercato() {
