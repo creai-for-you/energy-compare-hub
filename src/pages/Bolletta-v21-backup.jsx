@@ -232,26 +232,16 @@ if (pod !== "NON TROVATO") {
 
 if (consumoAnnuo !== "NON TROVATO") {
   setConsumoLuce(
-  consumoAnnuo
-    .replace(/\./g, "")
-    .replace(",", ".")
-);
+    consumoAnnuo.replace(".", "")
+  );
 }
 
 if (potenza !== "NON TROVATO") {
-  setPotenza(
-  potenza.replace(",", ".")
-);
+  setPotenza(potenza);
 }
 
 if (spesaAnnua !== "NON TROVATO") {
-  setSpesaLuce(
-    spesaAnnua
-      .replace(/\./g, "")
-      .replace(",", ".")
-  );
-} else {
-  setSpesaLuce("");
+  setSpesaLuce(spesaAnnua);
 }
 
     alert(

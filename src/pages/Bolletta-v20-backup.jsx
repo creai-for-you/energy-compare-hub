@@ -219,8 +219,14 @@ spesaAnnua =
   spesaAnnua ||
   "NON TROVATO";
 
+const pdr =
+  testoEstratto.match(
+    /\b\d{14}\b/
+  )?.[0] || "NON TROVATO";
+  
 setDatiEstratti({
   pod,
+  pdr,
   consumoAnnuo,
   potenza,
   spesaAnnua,
@@ -232,26 +238,16 @@ if (pod !== "NON TROVATO") {
 
 if (consumoAnnuo !== "NON TROVATO") {
   setConsumoLuce(
-  consumoAnnuo
-    .replace(/\./g, "")
-    .replace(",", ".")
-);
+    consumoAnnuo.replace(".", "")
+  );
 }
 
 if (potenza !== "NON TROVATO") {
-  setPotenza(
-  potenza.replace(",", ".")
-);
+  setPotenza(potenza);
 }
 
 if (spesaAnnua !== "NON TROVATO") {
-  setSpesaLuce(
-    spesaAnnua
-      .replace(/\./g, "")
-      .replace(",", ".")
-  );
-} else {
-  setSpesaLuce("");
+  setSpesaLuce(spesaAnnua);
 }
 
     alert(
@@ -316,6 +312,11 @@ if (spesaAnnua !== "NON TROVATO") {
     <p>
   <strong>POD:</strong>{" "}
   {datiEstratti.pod}
+</p>
+
+<p>
+  <strong>PDR:</strong>{" "}
+  {datiEstratti.pdr}
 </p>
 
 <p>
