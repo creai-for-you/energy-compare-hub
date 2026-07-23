@@ -220,19 +220,6 @@ spesaAnnua =
   "NON TROVATO";
 
 let fornitore = "SCONOSCIUTO";
-let commodity = "SCONOSCIUTA";
-
-if (pod !== "NON TROVATO") {
-  commodity = "LUCE";
-}
-
-if (
-  pod === "NON TROVATO" &&
-  pdr !== "NON TROVATO"
-) {
-  commodity = "GAS";
-}
-
 
 if (
   testoEstratto
@@ -251,7 +238,6 @@ if (
 }
   
 setDatiEstratti({
-  commodity,
   fornitore,
   pod,
   consumoAnnuo,
@@ -345,11 +331,6 @@ if (spesaAnnua !== "NON TROVATO") {
     }}
   >
     <h3>Dati estratti</h3>
-
-<p>
-  <strong>Commodity:</strong>{" "}
-  {datiEstratti.commodity}
-</p>
 
 <p>
   <strong>Fornitore:</strong>{" "}
