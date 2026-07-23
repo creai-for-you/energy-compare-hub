@@ -219,26 +219,7 @@ spesaAnnua =
   spesaAnnua ||
   "NON TROVATO";
 
-let fornitore = "SCONOSCIUTO";
-
-if (
-  testoEstratto
-    .toUpperCase()
-    .includes("PLENITUDE")
-) {
-  fornitore = "PLENITUDE";
-}
-
-if (
-  testoEstratto
-    .toUpperCase()
-    .includes("SORGENIA")
-) {
-  fornitore = "SORGENIA";
-}
-  
 setDatiEstratti({
-  fornitore,
   pod,
   consumoAnnuo,
   potenza,
@@ -331,11 +312,6 @@ if (spesaAnnua !== "NON TROVATO") {
     }}
   >
     <h3>Dati estratti</h3>
-
-<p>
-  <strong>Fornitore:</strong>{" "}
-  {datiEstratti.fornitore}
-</p>
 
     <p>
   <strong>POD:</strong>{" "}
