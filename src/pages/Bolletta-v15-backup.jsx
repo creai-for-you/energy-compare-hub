@@ -190,59 +190,24 @@ async function analizzaPdf() {
 
     const pod =
   testoEstratto.match(
-    /IT\d{3}[A-Z0-9]+/i
+    /IT[0-9A-Z]{10,}/i
   )?.[0] || "NON TROVATO";
 
-const consumoAnnuo =
+const pdr =
   testoEstratto.match(
-    /CONSUMO ANNUO[\s\S]{0,100}?([0-9][0-9.,]*)\s*kWh/i
-  )?.[1] || "NON TROVATO";
+    /\b\d{14}\b/
+  )?.[0] || "NON TROVATO";
 
 const potenza =
   testoEstratto.match(
-    /POTENZA IMPEGNATA[\s\S]{0,120}?([0-9]+,[0-9]+)\s*kW/i
+    /([0-9]+[.,]?[0-9]*)\s*kW/i
   )?.[1] || "NON TROVATO";
-
-let spesaAnnua =
-  testoEstratto.match(
-    /SPESA ANNUA[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-  )?.[1];
-
-if (!spesaAnnua) {
-  spesaAnnua =
-    testoEstratto.match(
-      /Spesa annua[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-    )?.[1];
-}
-
-spesaAnnua =
-  spesaAnnua ||
-  "NON TROVATO";
 
 setDatiEstratti({
   pod,
-  consumoAnnuo,
+  pdr,
   potenza,
-  spesaAnnua,
 });
-
-if (pod !== "NON TROVATO") {
-  setPod(pod);
-}
-
-if (consumoAnnuo !== "NON TROVATO") {
-  setConsumoLuce(
-    consumoAnnuo.replace(".", "")
-  );
-}
-
-if (potenza !== "NON TROVATO") {
-  setPotenza(potenza);
-}
-
-if (spesaAnnua !== "NON TROVATO") {
-  setSpesaLuce(spesaAnnua);
-}
 
     alert(
       `PDF letto: ${pdf.numPages} pagine`
@@ -304,24 +269,19 @@ if (spesaAnnua !== "NON TROVATO") {
     <h3>Dati estratti</h3>
 
     <p>
-  <strong>POD:</strong>{" "}
-  {datiEstratti.pod}
-</p>
+      <strong>POD:</strong>{" "}
+      {datiEstratti.pod}
+    </p>
 
-<p>
-  <strong>Consumo annuo:</strong>{" "}
-  {datiEstratti.consumoAnnuo}
-</p>
+    <p>
+      <strong>PDR:</strong>{" "}
+      {datiEstratti.pdr}
+    </p>
 
-<p>
-  <strong>Potenza:</strong>{" "}
-  {datiEstratti.potenza}
-</p>
-
-<p>
-  <strong>Spesa annua:</strong>{" "}
-  {datiEstratti.spesaAnnua}
-</p>
+    <p>
+      <strong>Potenza:</strong>{" "}
+      {datiEstratti.potenza}
+    </p>
   </div>
 )}
 

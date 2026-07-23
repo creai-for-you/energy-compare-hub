@@ -18,9 +18,6 @@ export default function Bolletta() {
   const [testoPdf, setTestoPdf] =
   useState("");
 
-  const [datiEstratti, setDatiEstratti] =
-  useState(null);
-
   const [pod, setPod] = useState("");
   const [pdr, setPdr] = useState("");
 
@@ -188,62 +185,6 @@ async function analizzaPdf() {
 
     setTestoPdf(testoEstratto);
 
-    const pod =
-  testoEstratto.match(
-    /IT\d{3}[A-Z0-9]+/i
-  )?.[0] || "NON TROVATO";
-
-const consumoAnnuo =
-  testoEstratto.match(
-    /CONSUMO ANNUO[\s\S]{0,100}?([0-9][0-9.,]*)\s*kWh/i
-  )?.[1] || "NON TROVATO";
-
-const potenza =
-  testoEstratto.match(
-    /POTENZA IMPEGNATA[\s\S]{0,120}?([0-9]+,[0-9]+)\s*kW/i
-  )?.[1] || "NON TROVATO";
-
-let spesaAnnua =
-  testoEstratto.match(
-    /SPESA ANNUA[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-  )?.[1];
-
-if (!spesaAnnua) {
-  spesaAnnua =
-    testoEstratto.match(
-      /Spesa annua[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-    )?.[1];
-}
-
-spesaAnnua =
-  spesaAnnua ||
-  "NON TROVATO";
-
-setDatiEstratti({
-  pod,
-  consumoAnnuo,
-  potenza,
-  spesaAnnua,
-});
-
-if (pod !== "NON TROVATO") {
-  setPod(pod);
-}
-
-if (consumoAnnuo !== "NON TROVATO") {
-  setConsumoLuce(
-    consumoAnnuo.replace(".", "")
-  );
-}
-
-if (potenza !== "NON TROVATO") {
-  setPotenza(potenza);
-}
-
-if (spesaAnnua !== "NON TROVATO") {
-  setSpesaLuce(spesaAnnua);
-}
-
     alert(
       `PDF letto: ${pdf.numPages} pagine`
     );
@@ -291,39 +232,6 @@ if (spesaAnnua !== "NON TROVATO") {
 >
   Analizza PDF
 </button>
-
-{datiEstratti && (
-  <div
-    style={{
-      marginTop: "20px",
-      border: "1px solid #ddd",
-      padding: "15px",
-      borderRadius: "8px",
-    }}
-  >
-    <h3>Dati estratti</h3>
-
-    <p>
-  <strong>POD:</strong>{" "}
-  {datiEstratti.pod}
-</p>
-
-<p>
-  <strong>Consumo annuo:</strong>{" "}
-  {datiEstratti.consumoAnnuo}
-</p>
-
-<p>
-  <strong>Potenza:</strong>{" "}
-  {datiEstratti.potenza}
-</p>
-
-<p>
-  <strong>Spesa annua:</strong>{" "}
-  {datiEstratti.spesaAnnua}
-</p>
-  </div>
-)}
 
 {testoPdf && (
   <textarea

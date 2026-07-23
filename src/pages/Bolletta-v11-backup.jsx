@@ -1,11 +1,4 @@
 import { useState } from "react";
-import * as pdfjsLib from "pdfjs-dist";
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-  ).toString();
-
 import { supabase } from "../lib/supabase";
 
 export default function Bolletta() {
@@ -13,12 +6,6 @@ export default function Bolletta() {
     useState("DOMESTICO");
   
     const [filePdf, setFilePdf] =
-  useState(null);
-
-  const [testoPdf, setTestoPdf] =
-  useState("");
-
-  const [datiEstratti, setDatiEstratti] =
   useState(null);
 
   const [pod, setPod] = useState("");
@@ -151,107 +138,6 @@ async function caricaUltimoProfilo() {
     "Ultimo profilo caricato."
   );
 }
-async function analizzaPdf() {
-  if (!filePdf) {
-    alert("Seleziona un PDF.");
-    return;
-  }
-
-  try {
-    const arrayBuffer =
-      await filePdf.arrayBuffer();
-
-    const pdf =
-      await pdfjsLib.getDocument({
-        data: arrayBuffer,
-      }).promise;
-
-    let testoEstratto = "";
-
-    for (
-      let pagina = 1;
-      pagina <= pdf.numPages;
-      pagina++
-    ) {
-      const page =
-        await pdf.getPage(pagina);
-
-      const content =
-        await page.getTextContent();
-
-      testoEstratto += content.items
-        .map((item) => item.str)
-        .join(" ");
-
-      testoEstratto += "\n";
-    }
-
-    setTestoPdf(testoEstratto);
-
-    const pod =
-  testoEstratto.match(
-    /IT\d{3}[A-Z0-9]+/i
-  )?.[0] || "NON TROVATO";
-
-const consumoAnnuo =
-  testoEstratto.match(
-    /CONSUMO ANNUO[\s\S]{0,100}?([0-9][0-9.,]*)\s*kWh/i
-  )?.[1] || "NON TROVATO";
-
-const potenza =
-  testoEstratto.match(
-    /POTENZA IMPEGNATA[\s\S]{0,120}?([0-9]+,[0-9]+)\s*kW/i
-  )?.[1] || "NON TROVATO";
-
-let spesaAnnua =
-  testoEstratto.match(
-    /SPESA ANNUA[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-  )?.[1];
-
-if (!spesaAnnua) {
-  spesaAnnua =
-    testoEstratto.match(
-      /Spesa annua[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-    )?.[1];
-}
-
-spesaAnnua =
-  spesaAnnua ||
-  "NON TROVATO";
-
-setDatiEstratti({
-  pod,
-  consumoAnnuo,
-  potenza,
-  spesaAnnua,
-});
-
-if (pod !== "NON TROVATO") {
-  setPod(pod);
-}
-
-if (consumoAnnuo !== "NON TROVATO") {
-  setConsumoLuce(
-    consumoAnnuo.replace(".", "")
-  );
-}
-
-if (potenza !== "NON TROVATO") {
-  setPotenza(potenza);
-}
-
-if (spesaAnnua !== "NON TROVATO") {
-  setSpesaLuce(spesaAnnua);
-}
-
-    alert(
-      `PDF letto: ${pdf.numPages} pagine`
-    );
-  } catch (err) {
-    console.error(err);
-    alert("Errore lettura PDF.");
-  }
-}
   return (
     <div
       style={{
@@ -282,7 +168,18 @@ if (spesaAnnua !== "NON TROVATO") {
 )}
 
 <button
-  onClick={analizzaPdf}
+  onClick={() => {
+    if (!filePdf) {
+      alert(
+        "Seleziona un PDF."
+      );
+      return;
+    }
+
+    alert(
+      `PDF selezionato: ${filePdf.name}`
+    );
+  }}
   style={{
     padding: "12px 24px",
     marginTop: "10px",
@@ -291,51 +188,6 @@ if (spesaAnnua !== "NON TROVATO") {
 >
   Analizza PDF
 </button>
-
-{datiEstratti && (
-  <div
-    style={{
-      marginTop: "20px",
-      border: "1px solid #ddd",
-      padding: "15px",
-      borderRadius: "8px",
-    }}
-  >
-    <h3>Dati estratti</h3>
-
-    <p>
-  <strong>POD:</strong>{" "}
-  {datiEstratti.pod}
-</p>
-
-<p>
-  <strong>Consumo annuo:</strong>{" "}
-  {datiEstratti.consumoAnnuo}
-</p>
-
-<p>
-  <strong>Potenza:</strong>{" "}
-  {datiEstratti.potenza}
-</p>
-
-<p>
-  <strong>Spesa annua:</strong>{" "}
-  {datiEstratti.spesaAnnua}
-</p>
-  </div>
-)}
-
-{testoPdf && (
-  <textarea
-    value={testoPdf}
-    readOnly
-    rows={10}
-    style={{
-      width: "100%",
-      marginTop: "20px",
-    }}
-  />
-)}
 
 <hr />
       <h2>Tipologia Cliente</h2>

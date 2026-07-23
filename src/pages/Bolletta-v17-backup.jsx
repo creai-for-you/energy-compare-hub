@@ -203,21 +203,10 @@ const potenza =
     /POTENZA IMPEGNATA[\s\S]{0,120}?([0-9]+,[0-9]+)\s*kW/i
   )?.[1] || "NON TROVATO";
 
-let spesaAnnua =
+const spesaAnnua =
   testoEstratto.match(
-    /SPESA ANNUA[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-  )?.[1];
-
-if (!spesaAnnua) {
-  spesaAnnua =
-    testoEstratto.match(
-      /Spesa annua[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-    )?.[1];
-}
-
-spesaAnnua =
-  spesaAnnua ||
-  "NON TROVATO";
+    /SPESA ANNUA[\s\S]{0,80}?([0-9.]+,[0-9]+)/i
+  )?.[1] || "NON TROVATO";
 
 setDatiEstratti({
   pod,

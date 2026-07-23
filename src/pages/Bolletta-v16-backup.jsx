@@ -195,29 +195,18 @@ async function analizzaPdf() {
 
 const consumoAnnuo =
   testoEstratto.match(
-    /CONSUMO ANNUO[\s\S]{0,100}?([0-9][0-9.,]*)\s*kWh/i
+    /CONSUMO ANNUO[^0-9]*([0-9.,]+)/is
   )?.[1] || "NON TROVATO";
 
 const potenza =
   testoEstratto.match(
-    /POTENZA IMPEGNATA[\s\S]{0,120}?([0-9]+,[0-9]+)\s*kW/i
+    /POTENZA IMPEGNATA[^0-9]*([0-9.,]+)/is
   )?.[1] || "NON TROVATO";
 
-let spesaAnnua =
+const spesaAnnua =
   testoEstratto.match(
-    /SPESA ANNUA[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-  )?.[1];
-
-if (!spesaAnnua) {
-  spesaAnnua =
-    testoEstratto.match(
-      /Spesa annua[\s\S]{0,120}?([0-9.]+,[0-9]+)/i
-    )?.[1];
-}
-
-spesaAnnua =
-  spesaAnnua ||
-  "NON TROVATO";
+    /SPESA ANNUA[^0-9]*([0-9.,]+)/is
+  )?.[1] || "NON TROVATO";
 
 setDatiEstratti({
   pod,
