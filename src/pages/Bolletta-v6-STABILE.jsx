@@ -66,75 +66,6 @@ async function salvaProfilo() {
 
   alert("Profilo salvato su Supabase.");
 }
-
-async function caricaUltimoProfilo() {
-  const { data, error } =
-    await supabase
-      .from("profili_cliente")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      })
-      .limit(1);
-
-  if (error) {
-    console.error(error);
-    alert(
-      "Errore caricamento profilo."
-    );
-    return;
-  }
-
-  if (!data?.length) {
-    alert(
-      "Nessun profilo trovato."
-    );
-    return;
-  }
-
-  const profilo = data[0];
-
-  setTipoCliente(
-    profilo.tipo_cliente || "DOMESTICO"
-  );
-
-  setPod(profilo.pod || "");
-  setPdr(profilo.pdr || "");
-
-  setConsumoLuce(
-    String(
-      profilo.consumo_luce || ""
-    )
-  );
-
-  setConsumoGas(
-    String(
-      profilo.consumo_gas || ""
-    )
-  );
-
-  setPotenza(
-    String(
-      profilo.potenza || ""
-    )
-  );
-
-  setSpesaLuce(
-    String(
-      profilo.spesa_luce || ""
-    )
-  );
-
-  setSpesaGas(
-    String(
-      profilo.spesa_gas || ""
-    )
-  );
-
-  alert(
-    "Ultimo profilo caricato."
-  );
-}
   return (
     <div
       style={{
@@ -359,16 +290,6 @@ async function caricaUltimoProfilo() {
   }}
 >
   Salva su Supabase
-</button>
-<button
-  onClick={caricaUltimoProfilo}
-  style={{
-    padding: "12px 24px",
-    marginLeft: "10px",
-    cursor: "pointer",
-  }}
->
-  Carica ultimo profilo
 </button>
     </div>
   );
