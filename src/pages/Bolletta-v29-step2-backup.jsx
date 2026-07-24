@@ -12,13 +12,10 @@ export default function Bolletta() {
   const [tipoCliente, setTipoCliente] =
     useState("DOMESTICO");
   
-  const [tipoBolletta, setTipoBolletta] =
+const [tipoBolletta, setTipoBolletta] =
   useState("LUCE");
 
-  const [filePdf, setFilePdf] =
-  useState(null);
-
-  const [filePdfGas, setFilePdfGas] =
+    const [filePdf, setFilePdf] =
   useState(null);
 
   const [testoPdf, setTestoPdf] =
@@ -336,86 +333,21 @@ if (spesaAnnua !== "NON TROVATO") {
 
 <h2>Upload Bolletta PDF</h2>
 
-{tipoBolletta === "LUCE" && (
-  <>
-    <input
-      type="file"
-      accept=".pdf"
-      onChange={(e) =>
-        setFilePdf(
-          e.target.files?.[0] || null
-        )
-      }
-    />
+<input
+  type="file"
+  accept=".pdf"
+  onChange={(e) =>
+    setFilePdf(
+      e.target.files?.[0] || null
+    )
+  }
+/>
 
-    {filePdf && (
-      <p>
-        <strong>File Luce:</strong>{" "}
-        {filePdf.name}
-      </p>
-    )}
-  </>
-)}
-
-{tipoBolletta === "GAS" && (
-  <>
-    <input
-      type="file"
-      accept=".pdf"
-      onChange={(e) =>
-        setFilePdfGas(
-          e.target.files?.[0] || null
-        )
-      }
-    />
-
-    {filePdfGas && (
-      <p>
-        <strong>File Gas:</strong>{" "}
-        {filePdfGas.name}
-      </p>
-    )}
-  </>
-)}
-
-{tipoBolletta === "LUCE_GAS" && (
-  <>
-    <p>
-      <strong>Bolletta Luce</strong>
-    </p>
-
-    <input
-      type="file"
-      accept=".pdf"
-      onChange={(e) =>
-        setFilePdf(
-          e.target.files?.[0] || null
-        )
-      }
-    />
-
-    {filePdf && (
-      <p>{filePdf.name}</p>
-    )}
-
-    <p>
-      <strong>Bolletta Gas</strong>
-    </p>
-
-    <input
-      type="file"
-      accept=".pdf"
-      onChange={(e) =>
-        setFilePdfGas(
-          e.target.files?.[0] || null
-        )
-      }
-    />
-
-    {filePdfGas && (
-      <p>{filePdfGas.name}</p>
-    )}
-  </>
+{filePdf && (
+  <p>
+    <strong>File:</strong>{" "}
+    {filePdf.name}
+  </p>
 )}
 
 <button
