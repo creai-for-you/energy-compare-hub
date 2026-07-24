@@ -567,10 +567,8 @@ if (spesaAnnua !== "NON TROVATO") {
 
       <hr />
 
-    {(tipoBolletta === "GAS" ||
-     tipoBolletta === "LUCE_GAS") && (
-  <>
-    <h2>Gas</h2>
+      <h2>Gas</h2>
+
       <p>
         PDR
         <br />
@@ -610,8 +608,7 @@ if (spesaAnnua !== "NON TROVATO") {
           }
         />
       </p>
-        </>
-      )}
+
       <hr />
 
       <h2>Riepilogo Profilo</h2>
