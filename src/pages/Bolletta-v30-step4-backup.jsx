@@ -313,16 +313,6 @@ if (spesaAnnua !== "NON TROVATO") {
   setSpesaLuce("");
 }
 
-if (pdr !== "NON TROVATO") {
-  setPdr(pdr);
-}
-
-if (consumoGas !== "NON TROVATO") {
-  setConsumoGas(
-    consumoGas.replace(",", ".")
-  );
-}
-
     alert(
       `PDF letto: ${pdf.numPages} pagine`
     );

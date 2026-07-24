@@ -243,7 +243,7 @@ const pdr =
 
 const consumoGas =
   testoEstratto.match(
-    /Consumo fatturato[\s\S]{0,100}?([0-9]+,[0-9]+)/i
+    /Consumo fatturato[\s\S]{0,50}?([0-9.,]+)\s*Smc/i
   )?.[1] || "NON TROVATO";
 
 if (pod !== "NON TROVATO") {
@@ -311,16 +311,6 @@ if (spesaAnnua !== "NON TROVATO") {
   );
 } else {
   setSpesaLuce("");
-}
-
-if (pdr !== "NON TROVATO") {
-  setPdr(pdr);
-}
-
-if (consumoGas !== "NON TROVATO") {
-  setConsumoGas(
-    consumoGas.replace(",", ".")
-  );
 }
 
     alert(

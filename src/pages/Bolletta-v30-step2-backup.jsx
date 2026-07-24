@@ -236,16 +236,6 @@ spesaAnnua =
 let fornitore = "SCONOSCIUTO";
 let commodity = "SCONOSCIUTA";
 
-const pdr =
-  testoEstratto.match(
-    /\b\d{14}\b/
-  )?.[0] || "NON TROVATO";
-
-const consumoGas =
-  testoEstratto.match(
-    /Consumo fatturato[\s\S]{0,100}?([0-9]+,[0-9]+)/i
-  )?.[1] || "NON TROVATO";
-
 if (pod !== "NON TROVATO") {
   commodity = "LUCE";
 }
@@ -273,14 +263,12 @@ if (
 ) {
   fornitore = "SORGENIA";
 }
-
+  
 setDatiEstratti({
   commodity,
   fornitore,
   pod,
-  pdr,
   consumoAnnuo,
-  consumoGas,
   potenza,
   spesaAnnua,
 });
@@ -311,16 +299,6 @@ if (spesaAnnua !== "NON TROVATO") {
   );
 } else {
   setSpesaLuce("");
-}
-
-if (pdr !== "NON TROVATO") {
-  setPdr(pdr);
-}
-
-if (consumoGas !== "NON TROVATO") {
-  setConsumoGas(
-    consumoGas.replace(",", ".")
-  );
 }
 
     alert(
@@ -486,11 +464,6 @@ if (consumoGas !== "NON TROVATO") {
 </p>
 
 <p>
-  <strong>PDR:</strong>{" "}
-  {datiEstratti.pdr}
-</p>
-
-<p>
   <strong>Consumo annuo:</strong>{" "}
   {datiEstratti.consumoAnnuo}
 </p>
@@ -498,11 +471,6 @@ if (consumoGas !== "NON TROVATO") {
 <p>
   <strong>Potenza:</strong>{" "}
   {datiEstratti.potenza}
-</p>
-
-<p>
-  <strong>Consumo Gas:</strong>{" "}
-  {datiEstratti.consumoGas}
 </p>
 
 <p>
