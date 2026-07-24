@@ -628,11 +628,7 @@ if (spesaAnnua !== "NON TROVATO") {
       <p>
         <strong>Cliente:</strong>{" "}
         {tipoCliente}
-      
       </p>
-      {(tipoBolletta === "LUCE" ||
-    tipoBolletta === "LUCE_GAS") && (
-    <>
 
       <p>
         <strong>POD:</strong> {pod}
@@ -669,10 +665,8 @@ if (spesaAnnua !== "NON TROVATO") {
         </strong>{" "}
         € {spesaLuce || 0}
       </p>
-       </>
-      )}
+
       <p>
-        
         <strong>
           Spesa Gas:
         </strong>{" "}

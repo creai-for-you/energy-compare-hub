@@ -672,7 +672,6 @@ if (spesaAnnua !== "NON TROVATO") {
        </>
       )}
       <p>
-        
         <strong>
           Spesa Gas:
         </strong>{" "}
